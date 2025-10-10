@@ -4,7 +4,7 @@
     "slug": "CarBnb",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/Logo-negro.jpg",
     "scheme": "carbnb",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -14,16 +14,17 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/LogosinletrasB.jpg",
+        "backgroundImage": "./assets/images/LogosinletrasB.jpg",
+        "monochromeImage": "./assets/images/LogosinletrasB.jpg"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/Logo-negro.jpg",
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",

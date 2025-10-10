@@ -18,6 +18,11 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# IDE
+.vscode/
+.idea/
+
+
 # Metro
 .metro-health-check*
 
