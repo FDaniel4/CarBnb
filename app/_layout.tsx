@@ -1,12 +1,9 @@
-
-import 'react-native-reanimated';
-import SplashScreen from './index';
-
+import { Slot } from 'expo-router';
 import "../global.css";
 
 export default function RootLayout() {
 
   return (
-    <SplashScreen />
+    <Slot />
   );
 }
