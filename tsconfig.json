@@ -19,3 +19,4 @@
     "nativewind-env.d.ts"
   ]
 }
+// If your editor has a `$schema` property at the top, remove it or point it to a local schema file.

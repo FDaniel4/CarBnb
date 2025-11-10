@@ -22,7 +22,8 @@ const DrawerLayout = () => {
         options={{
           drawerLabel: 'Home',
           title: 'Home',
-          drawerIcon:({color,size})=>(
+          // AQUÍ LA CORRECCIÓN 1
+          drawerIcon:({color, size}: {color: string, size: number})=>(
             <Ionicons name='home-outline'
             size={size} color={color}>
             </Ionicons>
@@ -34,7 +35,8 @@ const DrawerLayout = () => {
         options={{
           drawerLabel: 'Profile',
           title: 'Profile',
-          drawerIcon:({color,size})=>(
+          // AQUÍ LA CORRECCIÓN 2
+          drawerIcon:({color, size}: {color: string, size: number})=>(
             <Ionicons name='person-outline'
             size={size} color={color}>
             </Ionicons>
