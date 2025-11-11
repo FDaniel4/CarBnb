@@ -22,7 +22,6 @@ const DrawerLayout = () => {
         options={{
           drawerLabel: 'Home',
           title: 'Home',
-          // AQUÍ LA CORRECCIÓN 1
           drawerIcon:({color, size}: {color: string, size: number})=>(
             <Ionicons name='home-outline'
             size={size} color={color}>
@@ -35,7 +34,6 @@ const DrawerLayout = () => {
         options={{
           drawerLabel: 'Profile',
           title: 'Profile',
-          // AQUÍ LA CORRECCIÓN 2
           drawerIcon:({color, size}: {color: string, size: number})=>(
             <Ionicons name='person-outline'
             size={size} color={color}>
@@ -43,6 +41,20 @@ const DrawerLayout = () => {
           )
         }}
       />
+
+      <Drawer.Screen
+        name="booknow" 
+        options={{
+          drawerLabel: 'Book Now',
+          title: 'Book Now',
+          drawerIcon:({color, size}: {color: string, size: number})=>(
+            <Ionicons name='calendar-outline'
+            size={size} color={color}>
+            </Ionicons>
+          )
+        }}
+      />
+      
     </Drawer>
   )
 }
