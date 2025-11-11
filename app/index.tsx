@@ -8,11 +8,11 @@ export default function SplashScreen() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      // 🔜 Aquí puedes poner lógica para decidir a dónde ir:
-      const isLoggedIn = false; // luego reemplazarás esto con tu lógica real
+      //TODO Aqui ira la logica para verificar si el usuario esta logueado
+      const isLoggedIn = true; //simular que no esta logueado
 
       if (isLoggedIn) {
-        router.replace("/drawer/home"); // ruta hacia tu pantalla Home
+        router.replace("/login/WelcomeScreen"); // ruta hacia Welcome
       } else {
         router.replace("/drawer/home"); // por ahora redirige igual al Home
       }

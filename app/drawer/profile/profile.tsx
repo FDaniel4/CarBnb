@@ -1,23 +1,32 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+
 const Profile = () => {
+  const router = useRouter();
+
   return (
     <View style={styles.container}>
       {/* 1. Área de la Imagen de Perfil */}
       <View style={styles.avatarContainer}>
-        {/* Usar un componente Image o View para el placeholder del avatar */}
-        <View style={styles.avatarPlaceholder} />
+        {/* Imagen del avatar */}
+        <Image
+  source={{
+    uri: 'https://randomuser.me/api/portraits/women/44.jpg',
+  }}
+  style={styles.avatarImage}
+/>
       </View>
 
       {/* 2. Información del Usuario */}
       <View style={styles.infoContainer}>
         <View style={styles.nameRow}>
           <Text style={styles.nameText}>Brendan Moore</Text>
-          {/* Símbolo de verificación (puedes usar un Text con un emoji o un icono) */}
           <Text style={styles.verifiedIcon}>{' \u2713'}</Text>
         </View>
         <Text style={styles.emailText}>brendamoo@gmail.com</Text>
-        <Text style={styles.phoneText}>+52 449 000 0000</Text>
+        <Text style={styles.phoneText}>+52 (449) 000 0000</Text>
       </View>
 
       {/* 3. Métricas (Cars published y Reservations) */}
@@ -26,8 +35,6 @@ const Profile = () => {
           <Text style={styles.metricValue}>183</Text>
           <Text style={styles.metricLabel}>Cars published</Text>
         </View>
-        {/* Separador vertical si lo necesitas */}
-        {/* <View style={styles.metricSeparator} /> */}
         <View style={styles.metricItem}>
           <Text style={styles.metricValueBold}>2,824</Text>
           <Text style={styles.metricLabel}>Reservations</Text>
@@ -36,9 +43,14 @@ const Profile = () => {
 
       {/* 4. Botones */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.buttonOrange}>
-          <Text style={styles.buttonText}>Change password</Text>
-        </TouchableOpacity>
+        <TouchableOpacity
+  style={styles.buttonOrange}
+  onPress={() => router.push('/change-password')}
+>
+  <Text style={styles.buttonText}>Change password</Text>
+</TouchableOpacity>
+
+
         <TouchableOpacity style={styles.buttonOrange}>
           <Text style={styles.buttonText}>Reservations</Text>
         </TouchableOpacity>
@@ -52,24 +64,23 @@ const Profile = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Fondo blanco
+    backgroundColor: '#fff',
     padding: 20,
-    alignItems: 'center', // Centra los elementos horizontalmente
+    alignItems: 'center',
   },
-  
+
   // Estilos del Avatar
   avatarContainer: {
-    marginTop: 50, // Espacio superior
+    marginTop: 50,
     marginBottom: 20,
   },
-  avatarPlaceholder: {
+  avatarImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#e0e0e0', // Color gris claro para el placeholder
-    // En una app real, aquí usarías <Image source={{ uri: '...' }} />
+    resizeMode: 'cover',
   },
-  
+
   // Estilos de la Información del Usuario
   infoContainer: {
     alignItems: 'center',
@@ -87,7 +98,7 @@ const styles = StyleSheet.create({
   },
   verifiedIcon: {
     fontSize: 18,
-    color: '#1e90ff', // Azul para el check
+    color: '#1e90ff',
     marginLeft: 5,
     fontWeight: 'bold',
   },
@@ -100,18 +111,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-  
+
   // Estilos de las Métricas
   metricsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-around', // Espacio entre las métricas
+    justifyContent: 'space-around',
     width: '100%',
-    paddingHorizontal: 40, // Padding lateral para centrar el bloque
+    paddingHorizontal: 40,
     marginBottom: 40,
   },
   metricItem: {
     alignItems: 'center',
-    flex: 1, // Para que ocupen el mismo espacio
+    flex: 1,
   },
   metricValue: {
     fontSize: 18,
@@ -121,30 +132,30 @@ const styles = StyleSheet.create({
   metricValueBold: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#ff6700', // Naranja para el valor destacado
+    color: '#ff6700',
   },
   metricLabel: {
     fontSize: 14,
     color: '#666',
     marginTop: 2,
-    textAlign: 'center', // Para "Cars published" se vea bien
+    textAlign: 'center',
   },
-  
+
   // Estilos de los Botones
   buttonContainer: {
-    width: '90%', // Ocupa casi todo el ancho
+    width: '90%',
   },
   buttonOrange: {
-    backgroundColor: '#ff6700', // Color naranja de la imagen
+    backgroundColor: '#ff6700',
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20, // Espacio entre botones
+    marginTop: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
-    elevation: 5, // Sombra para Android
+    elevation: 5,
   },
   buttonText: {
     color: '#fff',
