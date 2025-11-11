@@ -25,7 +25,7 @@ const DrawerLayout = () => {
   };
   return (
     <>
-      {/* 🔔 Modal flotante de notificaciones */}
+      {/* 🔔 Modal flotante de notificaciones (de desarrollo) */}
       <Modal
         transparent
         visible={showNotifications}
@@ -50,58 +50,7 @@ const DrawerLayout = () => {
       <Drawer
         drawerContent={CustomDrawer}
         screenOptions={{
-<<<<<<< HEAD
-            overlayColor:'rgba(0,0,0,0.5)',
-            drawerActiveTintColor:'orange',
-            headerShadowVisible:false,
-            sceneStyle:{
-                backgroundColor:'white'
-            },
-            drawerPosition:"right"
-        }}
-    >
-      <Drawer.Screen
-        name="home" 
-        options={{
-          drawerLabel: 'Home',
-          title: 'Home',
-          drawerIcon:({color, size}: {color: string, size: number})=>(
-            <Ionicons name='home-outline'
-            size={size} color={color}>
-            </Ionicons>
-          )
-        }}
-      />
-      <Drawer.Screen
-        name="profile/profile" 
-        options={{
-          drawerLabel: 'Profile',
-          title: 'Profile',
-          drawerIcon:({color, size}: {color: string, size: number})=>(
-            <Ionicons name='person-outline'
-            size={size} color={color}>
-            </Ionicons>
-          )
-        }}
-      />
-
-      <Drawer.Screen
-        name="booknow" 
-        options={{
-          drawerLabel: 'Book Now',
-          title: 'Book Now',
-          drawerIcon:({color, size}: {color: string, size: number})=>(
-            <Ionicons name='calendar-outline'
-            size={size} color={color}>
-            </Ionicons>
-          )
-        }}
-      />
-      
-    </Drawer>
-  )
-}
-=======
+          // --- Opciones de "desarrollo" (el header nuevo) ---
           overlayColor: "rgba(0,0,0,0.5)",
           drawerActiveTintColor: "orange",
           headerShadowVisible: false,
@@ -111,13 +60,10 @@ const DrawerLayout = () => {
           },
           headerTitleAlign: "center",
           sceneStyle: { backgroundColor: "white" },
-          // Aseguramos que el Drawer siga abriendo desde la derecha
           drawerPosition: "right",
           drawerStyle: { width: 310 },
           headerTitle: "",
->>>>>>> origin/desarrollo
 
-          // ✅ MOVIDO a headerRight para que aparezca en el lado derecho
           headerRight: ({ tintColor }) => (
             <View
               style={{
@@ -126,7 +72,7 @@ const DrawerLayout = () => {
                 marginRight: 10,
               }}
             >
-              {/* Botón de notificaciones (aparece PRIMERO, a la izquierda) */}
+              {/* Botón de notificaciones */}
               <TouchableOpacity onPress={() => setShowNotifications(true)}>
                 <Ionicons
                   name="notifications-outline"
@@ -138,6 +84,7 @@ const DrawerLayout = () => {
               {/* Espacio pequeño entre íconos */}
               <View style={{ width: 10 }} />
 
+              {/* Botón de Menú (Drawer) */}
               <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
                 <Ionicons name="menu" size={40} color={tintColor} />
               </TouchableOpacity>
@@ -146,7 +93,7 @@ const DrawerLayout = () => {
           headerLeft: () => (
             <TouchableOpacity onPress={handleGoHome} className="ml-4">
               <Image
-                source={require("../../assets/images/Logo-blanco.jpg")}
+                source={require("../../assets/images/Logo-blanco.jpg")} // <-- OJO: Asegúrate que esta imagen exista
                 className="w-24 h-24"
                 resizeMode="contain"
               />
@@ -154,12 +101,13 @@ const DrawerLayout = () => {
           ),
         }}
       >
+        {/* --- Tus pantallas del menú --- */}
         <Drawer.Screen
           name="home"
           options={{
             drawerLabel: "Home",
             title: "Home",
-            drawerIcon: ({ color, size }) => (
+            drawerIcon: ({ color, size }: {color: string, size: number}) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
@@ -169,9 +117,23 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Profile",
             title: "Profile",
-            drawerIcon: ({ color, size }) => (
+            drawerIcon: ({ color, size }: {color: string, size: number}) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
+          }}
+        />
+        
+        {/* --- Tu pantalla NUEVA que faltaba --- */}
+        <Drawer.Screen
+          name="booknow" 
+          options={{
+            drawerLabel: 'Book Now',
+            title: 'Book Now',
+            drawerIcon:({color, size}: {color: string, size: number})=>(
+              <Ionicons name='calendar-outline'
+              size={size} color={color}>
+              </Ionicons>
+            )
           }}
         />
       </Drawer>
@@ -179,13 +141,14 @@ const DrawerLayout = () => {
   );
 };
 
+// --- Estilos para el Modal (de desarrollo) ---
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-start",
     alignItems: "flex-end",
-    paddingTop: 60,
+    paddingTop: 60, // Ajusta esto a la altura de tu header
     paddingRight: 10,
   },
   notificationBox: {

@@ -6,10 +6,8 @@ import { ViewProps } from 'react-native';
 import { config } from '@gluestack-ui/config'; // <-- Importar la config por defecto
 import { GluestackUIProvider as RealGluestackProvider } from '@gluestack-ui/themed';
 
-// --- 2. Importar los proveedores que SÍ van anidados ---
-// (Nota: los importamos SIN llaves, como lo arreglamos antes)
-import { OverlayProvider } from '@gluestack-ui/overlay';
-import { ToastProvider } from '@gluestack-ui/toast';
+// --- 2. NO NECESITAMOS IMPORTAR NADA MÁS ---
+// GluestackUIProvider ya incluye OverlayProvider y ToastProvider
 
 export type ModeType = 'light' | 'dark' | 'system';
 
@@ -33,9 +31,10 @@ export function GluestackUIProvider({
   // y la usamos para controlar el 'colorMode' de Gluestack.
   return (
     <RealGluestackProvider config={config} colorMode={colorScheme}>
-      <OverlayProvider>
-        <ToastProvider>{props.children}</ToastProvider>
-      </OverlayProvider>
+      {/* ¡YA NO NECESITAMOS ENVOLVER NADA! 
+        El proveedor principal se encarga de todo.
+      */}
+      {props.children}
     </RealGluestackProvider>
   );
 }
