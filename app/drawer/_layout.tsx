@@ -107,7 +107,7 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Home",
             title: "Home",
-            drawerIcon: ({ color, size }: {color: string, size: number}) => (
+            drawerIcon: ({ color, size }: { color: string, size: number }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
@@ -117,25 +117,37 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Profile",
             title: "Profile",
-            drawerIcon: ({ color, size }: {color: string, size: number}) => (
+            drawerIcon: ({ color, size }: { color: string, size: number }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
           }}
         />
-        
+
         {/* --- Tu pantalla NUEVA que faltaba --- */}
         <Drawer.Screen
-          name="booknow" 
+          name="booknow"
           options={{
             drawerLabel: 'Book Now',
             title: 'Book Now',
-            drawerIcon:({color, size}: {color: string, size: number})=>(
+            drawerIcon: ({ color, size }: { color: string, size: number }) => (
               <Ionicons name='calendar-outline'
-              size={size} color={color}>
+                size={size} color={color}>
               </Ionicons>
             )
           }}
         />
+
+        <Drawer.Screen
+          name="publish/publishcar"
+          options={{
+            drawerLabel: "Publicar Auto",
+            title: "Publicar Auto",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="car-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
       </Drawer>
     </>
   );
