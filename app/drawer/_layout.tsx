@@ -1,7 +1,7 @@
 import CustomDrawer from "@/components/shared/CustomDrawer";
 import { Ionicons } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
-import { useNavigation, useRouter } from "expo-router";
+import { useRouter } from "expo-router";
 import Drawer from "expo-router/drawer";
 import React, { useState } from "react";
 import {
@@ -18,7 +18,7 @@ const DrawerLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const router = useRouter();
-  const navigation = useNavigation();
+  // const navigation = useNavigation(); // <--- BORRA ESTA LÍNEA
 
   const handleGoHome = () => {
     router.push("/drawer/home");
@@ -49,7 +49,7 @@ const DrawerLayout = () => {
 
       <Drawer
         drawerContent={CustomDrawer}
-        screenOptions={{
+        screenOptions={({ navigation }) => ({ // <--- AÑADE ({ navigation }) => AQUÍ
           // --- Opciones de "desarrollo" (el header nuevo) ---
           overlayColor: "rgba(0,0,0,0.5)",
           drawerActiveTintColor: "orange",
@@ -86,8 +86,8 @@ const DrawerLayout = () => {
 
               {/* Botón de Menú (Drawer) */}
               <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
-                <Ionicons name="menu" size={40} color={tintColor} />
-              </TouchableOpacity>
+                <Ionicons name="menu" size={40} color={tintColor} />
+              </TouchableOpacity>
             </View>
           ),
           headerLeft: () => (
@@ -99,7 +99,7 @@ const DrawerLayout = () => {
               />
             </TouchableOpacity>
           ),
-        }}
+        })}
       >
         {/* --- Tus pantallas del menú --- */}
         <Drawer.Screen
