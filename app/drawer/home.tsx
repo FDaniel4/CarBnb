@@ -119,7 +119,7 @@ const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
             Desde
           </Text>
           <Heading size="md" color="$orange500">
-            €{car.price}
+            ${car.price}
           </Heading>
           <Text color="$text500" size="xs">
             /día

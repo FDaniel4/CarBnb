@@ -18,7 +18,6 @@ const DrawerLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
 
   const router = useRouter();
-  // const navigation = useNavigation(); // <--- BORRA ESTA LÍNEA
 
   const handleGoHome = () => {
     router.push("/drawer/home");
@@ -49,8 +48,8 @@ const DrawerLayout = () => {
 
       <Drawer
         drawerContent={CustomDrawer}
-        screenOptions={({ navigation }) => ({ // <--- AÑADE ({ navigation }) => AQUÍ
-          // --- Opciones de "desarrollo" (el header nuevo) ---
+        screenOptions={({ navigation }) => ({
+          // --- Opciones de "desarrollo"  ---
           overlayColor: "rgba(0,0,0,0.5)",
           drawerActiveTintColor: "orange",
           headerShadowVisible: false,
@@ -132,7 +131,7 @@ const DrawerLayout = () => {
             drawerIcon: ({ color, size }: { color: string, size: number }) => (
               <Ionicons name='calendar-outline'
                 size={size} color={color}>
-              </Ionicons>
+              </Ionicons> 
             )
           }}
         />
@@ -148,10 +147,22 @@ const DrawerLayout = () => {
           }}
         />
 
+         <Drawer.Screen
+           name="myreservations" // <-- CORRECCIÓN 2: Aquí decía "myreservations/myreservations"
+           options={{
+            drawerLabel: "Mis Reservaciones",
+            title: "Mis Reservaciones",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="car-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
       </Drawer>
     </>
   );
 };
+
 
 // --- Estilos para el Modal (de desarrollo) ---
 const styles = StyleSheet.create({
