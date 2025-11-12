@@ -5,11 +5,17 @@ import {
   ButtonText,
   ChevronDownIcon,
   ChevronRightIcon,
-  // Importamos 'Image' de Gluestack, aunque usaremos la nativa para el carrusel
+  CloseIcon,
   Image as GluestackImage,
   Heading,
   HStack,
   Icon,
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
   Pressable,
   SearchIcon,
   Switch,
@@ -18,16 +24,21 @@ import {
 } from '@gluestack-ui/themed';
 // Importamos los iconos que necesitamos
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // <--- 1. ASEGÚRATE QUE ESTO ESTÉ IMPORTADO
-import React, { useState } from 'react';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react'; // <--- Importamos useState
 // 1. IMPORTANTE: Traemos 'Image' de 'react-native'
 import {
-  Image as RNImage,
+  Platform,
+  Image as RNImage, // <--- Importamos Platform
   ScrollView,
   StyleSheet,
 } from 'react-native';
 // Importamos SafeAreaView para respetar los bordes del teléfono
 import { SafeAreaView } from 'react-native-safe-area-context';
+// Importamos el DatePicker
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 
 // --- Iconos Personalizados ---
 const CarIcon = (props: any) => (
@@ -86,7 +97,6 @@ const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
     <Box
       bg="$background0"
       borderRadius="$lg"
-      // elevation={5} // <-- Arreglo de 'shadow'
       overflow="hidden"
       width={220} // Ancho fijo para el carrusel
       mr="$4" // Margen a la derecha
@@ -169,6 +179,67 @@ export default function HomeScreen() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const router = useRouter();
 
+  // ----- INICIO DE LÓGICA PORTADA DE 'booknow.tsx' -----
+  const [showModal, setShowModal] = useState(false);
+  const [modalOptions, setModalOptions] = useState<string[]>([]);
+  const [selectedCity, setSelectedCity] = useState('City');
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
+  const [fromDate, setFromDate] = useState(new Date());
+  const [toDate, setToDate] = useState(new Date());
+  const [fromDateText, setFromDateText] = useState('From');
+  const [toDateText, setToDateText] = useState('To');
+
+  // --- Función para abrir el Modal de selección (simplificado) ---
+  const openModal = (options: string[]) => {
+    setModalOptions(options);
+    setShowModal(true);
+  };
+
+  // --- Función para abrir el DatePicker ---
+  const openDatePicker = (pickerType: 'from' | 'to') => {
+    setCurrentPicker(pickerType);
+    setShowDatePicker(true);
+  };
+
+  // --- Función que se llama cuando el DatePicker cambia ---
+  const onChangeDate = (
+    event: DateTimePickerEvent,
+    selectedDate: Date | undefined
+  ) => {
+    const currentDate =
+      selectedDate || (currentPicker === 'from' ? fromDate : toDate);
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+
+    if (event.type === 'set') {
+      if (currentPicker === 'from') {
+        setFromDate(currentDate);
+        setFromDateText(currentDate.toLocaleDateString());
+      } else {
+        setToDate(currentDate);
+        setToDateText(currentDate.toLocaleDateString());
+      }
+    } else {
+      if (Platform.OS === 'android') {
+        setShowDatePicker(false);
+      }
+    }
+  };
+
+  // Botón "Hecho" para iOS
+  const onDoneIOS = () => {
+    setShowDatePicker(false);
+    if (currentPicker === 'from') {
+      setFromDateText(fromDate.toLocaleDateString());
+    } else {
+      setToDateText(toDate.toLocaleDateString());
+    }
+  };
+  // ----- FIN DE LÓGICA PORTADA -----
+
   return (
     <SafeAreaView style={styles.safeArea}>
       {/* Usamos ScrollView para toda la pantalla */}
@@ -177,9 +248,9 @@ export default function HomeScreen() {
         <Box bg="$white" p="$5">
           {/* ----- 1. Featured ----- */}
           <HStack justifyContent="space-between" alignItems="center" mb="$4">
-            <Heading size="2xl">Featured</Heading>
+            <Heading size="2xl" color="$text900">Featured</Heading>
             <HStack alignItems="center" space="sm">
-              <Text size="xs">DARK MODE</Text>
+              <Text size="xs" color= "text900">DARK MODE</Text>
               <Switch
                 value={isDarkMode}
                 onToggle={() => setIsDarkMode(!isDarkMode)}
@@ -198,7 +269,7 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
 
-          {/* ----- 3. Formulario de Búsqueda Rápida ----- */}
+          {/* ----- 3. Formulario de Búsqueda Rápida (CON FUNCIONALIDAD) ----- */}
           <VStack space="md">
             {/* Botón City */}
             <Button
@@ -208,11 +279,13 @@ export default function HomeScreen() {
               bg="$background0"
               justifyContent="space-between"
               borderRadius="$lg"
-              onPress={() => {
-                /* TODO: Abrir modal de ciudad */
-              }}
+              onPress={() =>
+                openModal(['New York', 'Los Angeles', 'Chicago', 'Miami'])
+              } // <--- ACCIÓN
             >
-              <ButtonText color="$text500">City</ButtonText>
+              <ButtonText color={selectedCity === 'City' ? '$text500' : '$text800'}>
+                {selectedCity}
+              </ButtonText>
               <ButtonIcon as={ChevronDownIcon} color="$text700" />
             </Button>
 
@@ -229,36 +302,37 @@ export default function HomeScreen() {
               <CalendarIcon size="xl" color="$orange500" />
               <VStack flex={1}>
                 <Pressable
-                  onPress={() => {
-                    /* TODO: Abrir DatePicker From */
-                  }}
+                  onPress={() => openDatePicker('from')} // <--- ACCIÓN
                   sx={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     w: '$full',
                   }}
                 >
-                  <Text size="lg" color="$text500">
-                    From
+                  <Text
+                    size="lg"
+                    color={fromDateText === 'From' ? '$text500' : '$text800'}
+                  >
+                    {fromDateText}
                   </Text>
                   <Icon as={ChevronRightIcon} color="$text700" />
                 </Pressable>
 
                 <Box h="$3" />
-                {/* Espacio o línea divisoria */}
 
                 <Pressable
-                  onPress={() => {
-                    /* TODO: Abrir DatePicker To */
-                  }}
+                  onPress={() => openDatePicker('to')} // <--- ACCIÓN
                   sx={{
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     w: '$full',
                   }}
                 >
-                  <Text size="lg" color="$text500">
-                    To
+                  <Text
+                    size="lg"
+                    color={toDateText === 'To' ? '$text500' : '$text800'}
+                  >
+                    {toDateText}
                   </Text>
                   <Icon as={ChevronRightIcon} color="$text700" />
                 </Pressable>
@@ -271,8 +345,15 @@ export default function HomeScreen() {
               bg="$orange500"
               borderRadius="$lg"
               onPress={() => {
-                /* TODO: Ir a la pantalla BookNow con filtros? */
-                router.push('/drawer/booknow'); // <-- Navega a tu otra pantalla
+                // Navega a 'booknow' pasando los filtros
+                router.push({
+                  pathname: '/drawer/searchResults',
+                  params: {
+                    city: selectedCity,
+                    from: fromDateText,
+                    to: toDateText,
+                  },
+                });
               }}
               mt="$2"
             >
@@ -282,6 +363,69 @@ export default function HomeScreen() {
           </VStack>
         </Box>
       </ScrollView>
+
+      {/* ----- JSX PORTADO DE 'booknow.tsx' ----- */}
+      {/* ----- Modal Genérico (oculto hasta que se llama) ----- */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false);
+        }}
+      >
+        <ModalBackdrop />
+        <ModalContent bg="$orange100" borderRadius="$lg">
+          <ModalHeader borderBottomWidth={0}>
+            <Heading size="lg" color="$orange500">Select City</Heading>
+            <ModalCloseButton>
+              <Icon as={CloseIcon} color="$orange500" />
+            </ModalCloseButton>
+          </ModalHeader>
+          <ModalBody>
+            {modalOptions.map((option) => (
+              <Pressable
+                key={option}
+                onPress={() => {
+                  setSelectedCity(option); // <-- Actualiza la ciudad
+                  setShowModal(false);
+                }}
+                sx={{
+                  p: '$3',
+                  borderBottomWidth: 1,
+                  borderColor: '$orange200',
+                  ':active': {
+                    bg: '$orange200',
+                  },
+                }}
+              >
+                <Text color="$text700">{option}</Text>
+              </Pressable>
+            ))}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
+
+      {/* ----- DatePicker (oculto hasta que se llama) ----- */}
+      {showDatePicker && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={currentPicker === 'from' ? fromDate : toDate}
+          mode="date"
+          is24Hour={true}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onChangeDate}
+        />
+      )}
+      {/* Botones "Cancelar" y "Hecho" solo para iOS */}
+      {showDatePicker && Platform.OS === 'ios' && (
+        <HStack justifyContent="space-around" p="$2" bg="$white">
+          <Button variant="outline" onPress={() => setShowDatePicker(false)}>
+            <ButtonText>Cancel</ButtonText>
+          </Button>
+          <Button onPress={onDoneIOS}>
+            <ButtonText>Done</ButtonText>
+          </Button>
+        </HStack>
+      )}
     </SafeAreaView>
   );
 }

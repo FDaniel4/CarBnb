@@ -156,8 +156,7 @@ const DrawerLayout = () => {
             ),
           }}
         />
-
-        {/* --- Pantallas Ocultas (Flujo de reserva) --- */}
+            // --- Pantallas ocultas del Drawer ---
         <Drawer.Screen
             name="carDetail"
             options={{
@@ -170,6 +169,13 @@ const DrawerLayout = () => {
             options={{
               drawerItemStyle: { display: 'none' },
               title: "Pagar Reserva", // Título para el header
+            }}
+          />
+          <Drawer.Screen
+            name="searchResults"
+            options={{
+              drawerItemStyle: { display: 'none' },
+              title: "searchResults", // Título para el header
             }}
           />
 

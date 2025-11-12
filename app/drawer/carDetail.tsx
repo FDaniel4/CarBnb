@@ -42,7 +42,7 @@ const getImageFromName = (name: string) => {
 
 export default function CarDetailScreen() {
   const router = useRouter();
-  
+
   // 1. Obtenemos los parámetros que 'home.tsx' nos envió
   const params = useLocalSearchParams() as {
     name: string;
@@ -54,12 +54,16 @@ export default function CarDetailScreen() {
 
   const imageSource = getImageFromName(params.name);
 
-  // 2. Navegamos a la pantalla 'booknow'
+  // 2. ¡AQUÍ ESTÁ LA CORRECCIÓN!
+  // Navegamos a la nueva pantalla 'payment'
   const handleReserve = () => {
-    // Podríamos pasar el nombre del auto a la pantalla de reserva
+    // Pasamos los datos del auto a la pantalla de Pagos
     router.push({
-      pathname: '/drawer/payment',
-      params: { carName: params.name },
+      pathname: '/drawer/payment', // <-- ¡LISTO! Apunta a 'payment'
+      params: {
+        carName: params.name,
+        price: params.price,
+      },
     });
   };
 
