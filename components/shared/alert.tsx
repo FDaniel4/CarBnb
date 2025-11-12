@@ -1,28 +1,38 @@
-import { Ionicons } from "@expo/vector-icons";
+import { MaterialIcons } from "@expo/vector-icons";
 import React from "react";
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 interface AlertProps {
   visible: boolean;
-  onClose: () => void;
   message: string;
+  onClose: () => void;
+  icon?: keyof typeof MaterialIcons.glyphMap; // 👈 Permite íconos personalizados
+  color?: string; // 👈 Color de fondo del recuadro
 }
 
-const Alert: React.FC<AlertProps> = ({ visible, onClose, message }) => {
-  return (
-    <Modal
-      transparent
-      animationType="fade"
-      visible={visible}
-      onRequestClose={onClose}
-    >
-      <View style={styles.overlay}>
-        <View style={styles.alertBox}>
-          <Ionicons name="checkmark-circle-outline" size={70} color="#1a1a1a" />
-          <Text style={styles.message}>{message}</Text>
+const Alert: React.FC<AlertProps> = ({
+  visible,
+  message,
+  onClose,
+  icon = "check-circle", // valor por defecto
+  color = "#FFA559", // fondo anaranjado por defecto
+}) => {
+  if (!visible) return null;
 
+  return (
+    <Modal transparent animationType="fade" visible={visible}>
+      <View style={styles.overlay}>
+        <View style={[styles.alertBox, { backgroundColor: color }]}>
+          <MaterialIcons name={icon} size={50} color="#fff" style={styles.icon} />
+          <Text style={styles.message}>{message}</Text>
           <TouchableOpacity onPress={onClose}>
-            <Text style={styles.closeText}>Close</Text>
+            <Text style={styles.closeText}>Cerrar</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -30,37 +40,41 @@ const Alert: React.FC<AlertProps> = ({ visible, onClose, message }) => {
   );
 };
 
+export default Alert;
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
+    alignItems: "center",
   },
   alertBox: {
-    backgroundColor: "#fcae7e",
-    width: "80%",
-    borderRadius: 15,
+    width: 270,
+    borderRadius: 20,
+    paddingVertical: 25,
+    paddingHorizontal: 20,
     alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 30,
-    paddingHorizontal: 15,
-    borderWidth: 2,
-    borderColor: "#cc6b33",
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 5,
+    elevation: 5,
+  },
+  icon: {
+    marginBottom: 15,
   },
   message: {
-    fontSize: 18,
+    color: "#fff",
+    fontSize: 17,
     fontWeight: "600",
     textAlign: "center",
-    color: "#000",
-    marginVertical: 15,
+    marginBottom: 15,
   },
   closeText: {
-    fontSize: 16,
-    color: "#000",
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 15,
     textDecorationLine: "underline",
-    fontWeight: "500",
   },
 });
-
-export default Alert;
