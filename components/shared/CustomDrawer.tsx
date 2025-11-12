@@ -8,7 +8,7 @@ import { Image, View } from "react-native";
 
 const CustomDrawer = (props: DrawerContentComponentProps) => {
   return (
-    <DrawerContentScrollView {...props} scrollEnabled={false}>
+    <DrawerContentScrollView {...props} scrollEnabled={true}>
       {/* Encabezado del Drawer con imagen grande */}
       <View
         style={{

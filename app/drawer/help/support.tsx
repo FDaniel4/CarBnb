@@ -73,7 +73,7 @@ const TermsAndConditionsScreen = () => {
               style={{
                 transform: [{ rotate: expandedSection === index ? '180deg' : '0deg' }],
               }}
-              stroke="blue"
+              stroke="#ee8f13ff"
               strokeWidth={2}
               fill="none"
               viewBox="0 0 24 24"

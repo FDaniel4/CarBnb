@@ -1,22 +1,30 @@
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-
+import {
+  Image,
+  ScrollView, // <-- 1. IMPORTAMOS SCROLLVIEW
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 const Profile = () => {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    // 2. REEMPLAZAMOS EL VIEW POR SCROLLVIEW
+    // Usamos contentContainerStyle para que el padding y centrado se apliquen al *contenido*
+    <ScrollView contentContainerStyle={styles.container}>
       {/* 1. Área de la Imagen de Perfil */}
       <View style={styles.avatarContainer}>
         {/* Imagen del avatar */}
         <Image
-  source={{
-    uri: 'https://randomuser.me/api/portraits/women/44.jpg',
-  }}
-  style={styles.avatarImage}
-/>
+          source={{
+            uri: 'https://randomuser.me/api/portraits/women/44.jpg',
+          }}
+          style={styles.avatarImage}
+        />
       </View>
 
       {/* 2. Información del Usuario */}
@@ -44,18 +52,17 @@ const Profile = () => {
       {/* 4. Botones */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity
-  style={styles.buttonOrange}
-  onPress={() => router.push('/change-password')}
->
-  <Text style={styles.buttonText}>Change password</Text>
-</TouchableOpacity>
-
+          style={styles.buttonOrange}
+          onPress={() => router.push('/change-password')} // Asumo que esta ruta existe
+        >
+          <Text style={styles.buttonText}>Change password</Text>
+        </TouchableOpacity>
 
         <TouchableOpacity style={styles.buttonOrange}>
           <Text style={styles.buttonText}>Reservations</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -63,7 +70,8 @@ const Profile = () => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    // flex: 1, // <-- 3. CAMBIAMOS FLEX: 1
+    flexGrow: 1, // <-- POR FLEXGROW: 1 (para que pueda crecer)
     backgroundColor: '#fff',
     padding: 20,
     alignItems: 'center',

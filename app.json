@@ -8,7 +8,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/images/Logo-negro.jpg",
     "scheme": "carbnb",
     "userInterfaceStyle": "automatic",

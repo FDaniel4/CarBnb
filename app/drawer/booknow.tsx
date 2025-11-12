@@ -1,31 +1,31 @@
 import {
-    Box,
-    Button,
-    ButtonIcon,
-    ButtonText,
-    ChevronDownIcon,
-    ChevronRightIcon,
-    CloseIcon,
-    Heading,
-    HStack,
-    Icon,
-    Modal,
-    ModalBackdrop,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalHeader,
-    Pressable, // Importamos Pressable para los selectores de fecha
-    Text,
-    VStack,
+  Box,
+  Button,
+  ButtonIcon,
+  ButtonText,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  CloseIcon,
+  Heading,
+  HStack,
+  Icon,
+  Modal,
+  ModalBackdrop,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalHeader,
+  Pressable, // Importamos Pressable para los selectores de fecha
+  Text,
+  VStack,
 } from '@gluestack-ui/themed';
 import DateTimePicker, {
-    DateTimePickerEvent,
+  DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 // La campanita de "Book now" es especial, la importamos desde expo-vector-icons
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { Platform, StyleSheet } from 'react-native';
+import { Platform, ScrollView, StyleSheet } from 'react-native'; // <-- 1. IMPORTAMOS ScrollView
 // Importamos SafeAreaView para respetar los bordes del teléfono
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -115,147 +115,159 @@ export default function BookNowScreen() {
   return (
     // Usamos SafeAreaView para evitar la barra de estado
     <SafeAreaView style={styles.safeArea}>
-      <Box flex={1} bg="$white" p="$5">
-        {/* ----- 2. Sección del Título ----- */}
-        <HStack alignItems="center" space="sm" mb="$6" pt="$4">
-          <ReceptionBellIcon size="xl" color="$orange500" />
-          <Heading size="2xl" color="$text900">
-            Book now
-          </Heading>
-        </HStack>
+      {/* 2. Quitamos el padding (p="$5") del Box principal 
+         y mantenemos flex={1} para que ocupe toda la pantalla
+      */}
+      <Box flex={1} bg="$white">
+        {/* 3. Envolvemos el TÍTULO y el FORMULARIO en un ScrollView.
+          Le aplicamos el padding aquí.
+        */}
+        <ScrollView contentContainerStyle={styles.scrollContainer}>
+          {/* ----- 2. Sección del Título ----- */}
+          <HStack alignItems="center" space="sm" mb="$6" pt="$4">
+            <ReceptionBellIcon size="xl" color="$orange500" />
+            <Heading size="2xl" color="$text900">
+              Book now
+            </Heading>
+          </HStack>
 
-        {/* ----- 3. Formulario ----- */}
-        <VStack space="md">
-          {/* Selector de Ciudad (Redondeado) */}
-          <Button
-            size="lg"
-            borderColor="$orange200"
-            bg="$orange100"
-            justifyContent="space-between"
-            borderRadius="$lg" // <-- AJUSTE DE ESTILO
-            onPress={() =>
-              openModal(
-                'Select City',
-                ['New York', 'Los Angeles', 'Chicago', 'Miami'],
-                setSelectedCity
-              )
-            }
-          >
-            <ButtonText color="$text700">{selectedCity}</ButtonText>
-            <ButtonIcon as={ChevronRightIcon} color="$text700" />
-          </Button>
-
-          {/* Selectores de Fecha (Estilo de línea) */}
-          <Box>
-            <Text color="$gray500" mb="$2">
-              Date
-            </Text>
-            {/* Botón "Desde" */}
-            <Pressable
-              onPress={() => openDatePicker('from')}
-              sx={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottomWidth: 1,
-                borderColor: '$coolGray300',
-                py: '$3', // Padding vertical
-              }}
-              mb="$3"
+          {/* ----- 3. Formulario ----- */}
+          <VStack space="md">
+            {/* Selector de Ciudad (Redondeado) */}
+            <Button
+              size="lg"
+              borderColor="$orange200"
+              bg="$orange100"
+              justifyContent="space-between"
+              borderRadius="$lg" // <-- AJUSTE DE ESTILO
+              onPress={() =>
+                openModal(
+                  'Select City',
+                  ['New York', 'Los Angeles', 'Chicago', 'Miami'],
+                  setSelectedCity
+                )
+              }
             >
-              <Text
-                fontSize="$lg"
-                color={fromDateText === 'From' ? '$gray500' : '$text800'}
-              >
-                {fromDateText}
-              </Text>
-              <Icon as={ChevronDownIcon} color="$text700" />
-            </Pressable>
+              <ButtonText color="$text700">{selectedCity}</ButtonText>
+              <ButtonIcon as={ChevronRightIcon} color="$text700" />
+            </Button>
 
-            <Text color="$gray500" mb="$2">
-              Date
-            </Text>
-            {/* Botón "Hasta" */}
-            <Pressable
-              onPress={() => openDatePicker('to')}
-              sx={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                borderBottomWidth: 1,
-                borderColor: '$coolGray300',
-                py: '$3', // Padding vertical
-              }}
+            {/* Selectores de Fecha (Estilo de línea) */}
+            <Box>
+              <Text color="$gray500" mb="$2">
+                Date
+              </Text>
+              {/* Botón "Desde" */}
+              <Pressable
+                onPress={() => openDatePicker('from')}
+                sx={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottomWidth: 1,
+                  borderColor: '$coolGray300',
+                  py: '$3', // Padding vertical
+                }}
+                mb="$3"
+              >
+                <Text
+                  fontSize="$lg"
+                  color={fromDateText === 'From' ? '$gray500' : '$text800'}
+                >
+                  {fromDateText}
+                </Text>
+                <Icon as={ChevronDownIcon} color="$text700" />
+              </Pressable>
+
+              <Text color="$gray500" mb="$2">
+                Date
+              </Text>
+              {/* Botón "Hasta" */}
+              <Pressable
+                onPress={() => openDatePicker('to')}
+                sx={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottomWidth: 1,
+                  borderColor: '$coolGray300',
+                  py: '$3', // Padding vertical
+                }}
+              >
+                <Text
+                  fontSize="$lg"
+                  color={toDateText === 'To' ? '$gray500' : '$text800'}
+                >
+                  {toDateText}
+                </Text>
+                <Icon as={ChevronDownIcon} color="$text700" />
+              </Pressable>
+            </Box>
+
+            {/* Selector de Transmisión (Redondeado) */}
+            <Button
+              size="lg"
+              borderColor="$orange200"
+              bg="$orange100"
+              justifyContent="space-between"
+              borderRadius="$lg" // <-- AJUSTE DE ESTILO
+              onPress={() =>
+                openModal(
+                  'Select Transmission',
+                  ['Automatic', 'Manual'],
+                  setSelectedTransmission
+                )
+              }
             >
-              <Text
-                fontSize="$lg"
-                color={toDateText === 'To' ? '$gray500' : '$text800'}
-              >
-                {toDateText}
-              </Text>
-              <Icon as={ChevronDownIcon} color="$text700" />
-            </Pressable>
-          </Box>
+              {/* El typo "Transmition" de la imagen se corrige aquí */}
+              <ButtonText color="$text700">{selectedTransmission}</ButtonText>
+              <ButtonIcon as={ChevronRightIcon} color="$text700" />
+            </Button>
 
-          {/* Selector de Transmisión (Redondeado) */}
-          <Button
-            size="lg"
-            borderColor="$orange200"
-            bg="$orange100"
-            justifyContent="space-between"
-            borderRadius="$lg" // <-- AJUSTE DE ESTILO
-            onPress={() =>
-              openModal(
-                'Select Transmission',
-                ['Automatic', 'Manual'],
-                setSelectedTransmission
-              )
-            }
-          >
-            {/* El typo "Transmition" de la imagen se corrige aquí */}
-            <ButtonText color="$text700">{selectedTransmission}</ButtonText>
-            <ButtonIcon as={ChevronRightIcon} color="$text700" />
-          </Button>
+            {/* Selector de Tipo de Auto (Redondeado) */}
+            <Button
+              size="lg"
+              borderColor="$orange200"
+              bg="$orange100"
+              justifyContent="space-between"
+              borderRadius="$lg" // <-- AJUSTE DE ESTILO
+              onPress={() =>
+                openModal(
+                  'Select Car Type',
+                  ['Sedan', 'SUV', 'Truck', 'Sport'],
+                  setSelectedCarType
+                )
+              }
+            >
+              <ButtonText color="$text700">{selectedCarType}</ButtonText>
+              <ButtonIcon as={ChevronRightIcon} color="$text700" />
+            </Button>
 
-          {/* Selector de Tipo de Auto (Redondeado) */}
-          <Button
-            size="lg"
-            borderColor="$orange200"
-            bg="$orange100"
-            justifyContent="space-between"
-            borderRadius="$lg" // <-- AJUSTE DE ESTILO
-            onPress={() =>
-              openModal(
-                'Select Car Type',
-                ['Sedan', 'SUV', 'Truck', 'Sport'],
-                setSelectedCarType
-              )
-            }
-          >
-            <ButtonText color="$text700">{selectedCarType}</ButtonText>
-            <ButtonIcon as={ChevronRightIcon} color="$text700" />
-          </Button>
+            {/* Botón de Búsqueda (Redondeado) */}
+            <Button
+              size="lg"
+              bg="$orange500"
+              borderRadius="$lg" // <-- AJUSTE DE ESTILO
+              onPress={() => {
+                console.log('Buscando con:', {
+                  city: selectedCity,
+                  from: fromDateText,
+                  to: toDateText,
+                  transmission: selectedTransmission,
+                  type: selectedCarType,
+                });
+                // TODO: Navegar a la pantalla de resultados de búsqueda
+              }}
+              mt="$4"
+            >
+              <ButtonText>SEARCH</ButtonText>
+            </Button>
+          </VStack>
+        </ScrollView>
 
-          {/* Botón de Búsqueda (Redondeado) */}
-          <Button
-            size="lg"
-            bg="$orange500"
-            borderRadius="$lg" // <-- AJUSTE DE ESTILO
-            onPress={() => {
-              console.log('Buscando con:', {
-                city: selectedCity,
-                from: fromDateText,
-                to: toDateText,
-                transmission: selectedTransmission,
-                type: selectedCarType,
-              });
-              // TODO: Navegar a la pantalla de resultados de búsqueda
-            }}
-            mt="$4"
-          >
-            <ButtonText>SEARCH</ButtonText>
-          </Button>
-        </VStack>
+        {/* 4. DEJAMOS LOS MODALS Y EL DATEPICKER *FUERA* DEL SCROLLVIEW
+          para que floten por encima correctamente.
+        */}
 
         {/* ----- Modal Genérico (oculto hasta que se llama) ----- */}
         <Modal
@@ -268,7 +280,9 @@ export default function BookNowScreen() {
           {/* AQUÍ COMIENZAN LAS CORRECCIONES DE ESTILO */}
           <ModalContent bg="$orange100" borderRadius="$lg">
             <ModalHeader borderBottomWidth={0}>
-              <Heading size="lg" color="$orange500">{modalTitle}</Heading>
+              <Heading size="lg" color="$orange500">
+                {modalTitle}
+              </Heading>
               <ModalCloseButton>
                 <Icon as={CloseIcon} color="$orange500" />
               </ModalCloseButton>
@@ -334,5 +348,10 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  // 5. AÑADIMOS UN ESTILO PARA EL PADDING DEL SCROLLVIEW
+  scrollContainer: {
+    padding: 20, // (Equivalente a p="$5" de Gluestack)
+    paddingBottom: 40, // Espacio extra al final
   },
 });
