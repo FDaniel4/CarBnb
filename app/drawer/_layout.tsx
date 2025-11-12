@@ -148,6 +148,35 @@ const DrawerLayout = () => {
           }}
         />
 
+        {/* --- Pantalla visible en el Drawer --- */}
+        <Drawer.Screen
+          name="autos/mycars"
+          options={{
+            drawerLabel: "Mis Autos",
+            title: "Mis Autos",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="car-sport-outline" size={size} color={color} />
+            ),
+          }}
+        />
+
+        {/* --- Pantalla oculta (NO visible en el Drawer) --- */}
+        <Drawer.Screen
+          name="autos/editcar"
+          options={{
+            drawerItemStyle: { display: "none" }, // Oculta del Drawer
+            title: "Editar mi Auto",
+          }}
+        />
+
+<Drawer.Screen
+          name="help/faq"
+          options={{
+            drawerLabel: "Help & FAQ",
+            title: "Frequently Asked Questions",
+          }}
+        />
+
       </Drawer>
     </>
   );

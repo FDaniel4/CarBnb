@@ -1,163 +1,165 @@
-import React, { useState } from "react";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import React from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Switch,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import Alert from "../../../components/shared/alert"; // 👈 ruta relativa al componente
 
-const PublishCar = () => {
-  const [brand, setBrand] = useState("");
-  const [model, setModel] = useState("");
-  const [year, setYear] = useState("");
-  const [price, setPrice] = useState("");
-  const [priceDay, setPriceDay] = useState("");
-  const [location, setLocation] = useState("");
-  const [available, setAvailable] = useState(true);
-  const [alertVisible, setAlertVisible] = useState(false);
+const MyCarsScreen = () => {
+  const navigation = useNavigation();
 
-  const handlePublish = () => {
-    // Aquí podrías agregar validaciones más adelante
-    setAlertVisible(true);
+  // 🔹 Datos de ejemplo (puedes reemplazar por datos reales)
+  const cars = [
+    {
+      id: 1,
+      name: "Tesla Cybertruck",
+      description:
+        "Camioneta eléctrica futurista con un diseño de acero inoxidable y gran autonomía. Capacidad de remolque de hasta 6,350 kg.",
+      image: require("../../../assets/images/Autos/trax_lrg.jpg"),
+      rating: 5,
+    },
+    {
+      id: 2,
+      name: "Volkswagen Jetta 2025",
+      description:
+        "Motor 1.4L Turbo TSI de 150 hp y 250 Nm. Excelente desempeño en ciudad y carretera. Ideal para familias modernas.",
+      image: require("../../../assets/images/Autos/vento_lrg.jpg"),
+      rating: 3,
+    },
+  ];
+
+  // 🔹 Generar estrellas según calificación
+  const renderStars = (rating: number) => {
+    return (
+      <View style={styles.starsContainer}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <MaterialIcons
+            key={i}
+            name={i <= rating ? "star" : "star-border"}
+            size={22}
+            color="#ffa500"
+          />
+        ))}
+      </View>
+    );
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Publish a car</Text>
+      <Text style={styles.title}>Mis Autos</Text>
 
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="Brand"
-          value={brand}
-          onChangeText={setBrand}
-        />
-      </View>
+      {cars.map((car) => (
+        <View key={car.id} style={styles.card}>
+          {/* Imagen */}
+          <Image source={car.image} style={styles.image} />
 
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, { flex: 1 }]}
-          placeholder="Model"
-          value={model}
-          onChangeText={setModel}
-        />
-        <TextInput
-          style={[styles.input, { flex: 1, marginLeft: 10 }]}
-          placeholder="Year"
-          keyboardType="numeric"
-          value={year}
-          onChangeText={setYear}
-        />
-      </View>
+          {/* Info */}
+          <View style={styles.infoContainer}>
+            <View style={styles.headerRow}>
+              <Text style={styles.carName}>{car.name}</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Price per day"
-        keyboardType="numeric"
-        value={price}
-        onChangeText={setPrice}
-      />
+              {/* Iconos Editar / Eliminar */}
+              <View style={styles.iconRow}>
+                <TouchableOpacity
+                  onPress={() =>
+                    (navigation as any).navigate("autos/editcar")
+                  }
+                >
+                  <MaterialIcons
+                    name="edit"
+                    size={18}
+                    color="#333"
+                    style={styles.icon}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => {}}>
+                  <MaterialIcons
+                    name="delete"
+                    size={18}
+                    color="#333"
+                    style={styles.icon}
+                  />
+                </TouchableOpacity>
+              </View>
+            </View>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Location"
-        value={location}
-        onChangeText={setLocation}
-      />
+            <Text numberOfLines={3} style={styles.description}>
+              {car.description}
+            </Text>
 
-      <View style={styles.checkboxContainer}>
-        <Switch
-          value={available}
-          onValueChange={setAvailable}
-          thumbColor={available ? "#ff6700" : "#ccc"}
-          trackColor={{ false: "#dcdcdc", true: "#ffd5b3" }}
-        />
-        <Text style={styles.checkboxLabel}>Availability</Text>
-      </View>
-
-      <Text style={styles.sectionTitle}>Add real images</Text>
-      <View style={styles.imageRow}>
-        {[1, 2, 3, 4].map((i) => (
-          <TouchableOpacity key={i} style={styles.imageButton}>
-            <Text style={{ color: "#aaa", fontSize: 26 }}>+</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Price per day"
-        keyboardType="numeric"
-        value={priceDay}
-        onChangeText={setPriceDay}
-      />
-
-      <TouchableOpacity style={styles.button} onPress={handlePublish}>
-        <Text style={styles.buttonText}>Publish now</Text>
-      </TouchableOpacity>
-
-      <Alert
-        visible={alertVisible}
-        message="Your vehicle has been published successfully."
-        onClose={() => setAlertVisible(false)}
-      />
+            {/* Calificación */}
+            {renderStars(car.rating)}
+          </View>
+        </View>
+      ))}
     </ScrollView>
   );
 };
 
-// Reutilizamos tus estilos anteriores
+export default MyCarsScreen;
+
 const styles = StyleSheet.create({
-  container: { padding: 25, backgroundColor: "#fff" },
+  container: {
+    padding: 16,
+    backgroundColor: "#fff7f2",
+  },
   title: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#1a1a1a",
     textAlign: "center",
-    marginVertical: 20,
-  },
-  input: {
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 12,
-  },
-  row: { flexDirection: "row", justifyContent: "space-between" },
-  checkboxContainer: {
-    flexDirection: "row",
-    alignItems: "center",
     marginBottom: 20,
   },
-  checkboxLabel: { marginLeft: 8, fontSize: 16, color: "#333" },
-  sectionTitle: { fontWeight: "bold", fontSize: 16, marginBottom: 8 },
-  imageRow: {
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    flexDirection: "row",
+    marginBottom: 16,
+    padding: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  image: {
+    width: 110,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: "space-between",
+  },
+  headerRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 25,
-  },
-  imageButton: {
-    width: 65,
-    height: 65,
-    borderWidth: 1.5,
-    borderColor: "#ccc",
-    borderRadius: 10,
     alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "transparent",
   },
-  button: {
-    backgroundColor: "#ff6700",
-    paddingVertical: 16,
-    borderRadius: 12,
+  carName: {
+    fontWeight: "bold",
+    fontSize: 16,
+    color: "#222",
+  },
+  iconRow: {
+    flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
   },
-  buttonText: { color: "#fff", fontSize: 18, fontWeight: "bold" },
+  icon: {
+    marginLeft: 10,
+  },
+  description: {
+    fontSize: 13,
+    color: "#555",
+    marginVertical: 4,
+  },
+  starsContainer: {
+    flexDirection: "row",
+    marginTop: 4,
+  },
 });
-
-export default PublishCar;
