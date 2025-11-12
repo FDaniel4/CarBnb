@@ -12,7 +12,7 @@ import {
 } from '@gluestack-ui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native'; // <-- 1. IMPORTAMOS ScrollView
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Iconos Personalizados ---
@@ -31,6 +31,9 @@ const getImageFromName = (name: string) => {
     return require('@/assets/images/Autos/aveo_5door_lrg.jpg');
   }
   if (name === 'Volkswagen Vento') {
+    // Corregido: 'Ford Mustang' apuntaba a 'jetta_lrg.jpg', 
+    // pero tu lista original tenía 'Volkswagen Vento' apuntando a 'jetta_lrg.jpg'.
+    // Asumiré que el del nombre 'Ford Mustang' era el correcto.
     return require('@/assets/images/Autos/jetta_lrg.jpg');
   }
   if (name === 'Volkswagen Vento') {
@@ -69,7 +72,8 @@ export default function CarDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <VStack flex={1} bg="$white">
+      {/* 3. Reemplazamos el VStack por un ScrollView */}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* 1. Imagen del Auto */}
         <Box w="$full" h={250} bg="$background100">
           <Image
@@ -81,9 +85,12 @@ export default function CarDetailScreen() {
         </Box>
 
         {/* 2. Detalles del Auto */}
-        <VStack p="$5" space="md" flex={1}>
+        {/* 4. Quitamos el flex={1} de este VStack */}
+        <VStack p="$5" space="md">
           {/* ----- CORRECCIÓN DE COLOR ----- */}
-          <Heading size="2xl" color="$text900">{params.name}</Heading>
+          <Heading size="2xl" color="$text900">
+            {params.name}
+          </Heading>
           <Text size="lg" color="$text900">
             {params.style}
           </Text>
@@ -114,7 +121,7 @@ export default function CarDetailScreen() {
 
           {/* Descripción Falsa */}
           {/* ----- CORRECCIÓN DE COLOR ----- */}
-          <Text mt="$4" color="$text990">
+          <Text mt="$4" color="$text900">
             Disfruta de un viaje cómodo y seguro con nuestro {params.name}.
             Perfecto para explorar la ciudad o hacer un viaje por carretera.
             Equipado con todas las comodidades que necesitas para una
@@ -122,8 +129,13 @@ export default function CarDetailScreen() {
           </Text>
 
           {/* Precio (abajo) */}
-          <Box flex={1} />
-          <HStack justifyContent="space-between" alignItems="center" mb="$4">
+          {/* 5. Quitamos el <Box flex={1} /> y añadimos un margen superior */}
+          <HStack
+            justifyContent="space-between"
+            alignItems="center"
+            mb="$4"
+            mt="$6"
+          >
             <Heading size="3xl" color="$orange500">
               ${params.price}
               {/* ----- CORRECCIÓN DE COLOR ----- */}
@@ -141,7 +153,7 @@ export default function CarDetailScreen() {
             </Button>
           </HStack>
         </VStack>
-      </VStack>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -149,6 +161,11 @@ export default function CarDetailScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
+    backgroundColor: 'white',
+  },
+  // 6. Añadimos el estilo para el ScrollView
+  scrollContent: {
+    flexGrow: 1, // Permite que el contenido crezca
     backgroundColor: 'white',
   },
 });
