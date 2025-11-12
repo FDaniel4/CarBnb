@@ -90,7 +90,7 @@ const DrawerLayout = () => {
                   navigation.dispatch(DrawerActions.openDrawer())
                 }
               >
-                <Ionicons name="menu" size={40} color={tintColor} />
+                <Ionicons name="menu" size={40} color="orange" />
               </TouchableOpacity>
             </View>
           ),

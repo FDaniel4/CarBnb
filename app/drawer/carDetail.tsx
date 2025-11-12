@@ -30,7 +30,7 @@ const getImageFromName = (name: string) => {
   if (name === 'Kia Soul') {
     return require('@/assets/images/Autos/aveo_5door_lrg.jpg');
   }
-  if (name === 'Ford Mustang') {
+  if (name === 'Volkswagen Vento') {
     return require('@/assets/images/Autos/jetta_lrg.jpg');
   }
   if (name === 'Volkswagen Vento') {
@@ -115,8 +115,10 @@ export default function CarDetailScreen() {
           {/* Descripción Falsa */}
           {/* ----- CORRECCIÓN DE COLOR ----- */}
           <Text mt="$4" color="$text990">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua.
+            Disfruta de un viaje cómodo y seguro con nuestro {params.name}.
+            Perfecto para explorar la ciudad o hacer un viaje por carretera.
+            Equipado con todas las comodidades que necesitas para una
+            experiencia inolvidable.
           </Text>
 
           {/* Precio (abajo) */}
