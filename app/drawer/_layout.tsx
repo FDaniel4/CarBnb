@@ -16,12 +16,12 @@ import {
 
 const DrawerLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
-
   const router = useRouter();
 
   const handleGoHome = () => {
     router.push("/drawer/home");
   };
+
   return (
     <>
       {/* 🔔 Modal flotante de notificaciones (de desarrollo) */}
@@ -41,7 +41,9 @@ const DrawerLayout = () => {
               Tu reserva fue confirmada ✅
             </Text>
             <Text style={styles.notification}>Tienes un nuevo mensaje 💬</Text>
-            <Text style={[styles.notification, { marginBottom: 0 }]}>Recibiste una reseña 🌟</Text>
+            <Text style={[styles.notification, { marginBottom: 0 }]}>
+              Recibiste una reseña 🌟
+            </Text>
           </Pressable>
         </Pressable>
       </Modal>
@@ -49,7 +51,6 @@ const DrawerLayout = () => {
       <Drawer
         drawerContent={CustomDrawer}
         screenOptions={({ navigation }) => ({
-          // --- Opciones de "desarrollo"  ---
           overlayColor: "rgba(0,0,0,0.5)",
           drawerActiveTintColor: "orange",
           headerShadowVisible: false,
@@ -80,11 +81,14 @@ const DrawerLayout = () => {
                 />
               </TouchableOpacity>
 
-              {/* Espacio pequeño entre íconos */}
               <View style={{ width: 10 }} />
 
-              {/* Botón de Menú (Drawer) */}
-              <TouchableOpacity onPress={() => navigation.dispatch(DrawerActions.openDrawer())}>
+              {/* Botón de menú */}
+              <TouchableOpacity
+                onPress={() =>
+                  navigation.dispatch(DrawerActions.openDrawer())
+                }
+              >
                 <Ionicons name="menu" size={40} color={tintColor} />
               </TouchableOpacity>
             </View>
@@ -92,7 +96,7 @@ const DrawerLayout = () => {
           headerLeft: () => (
             <TouchableOpacity onPress={handleGoHome} className="ml-4">
               <Image
-                source={require("../../assets/images/Logo-blanco.jpg")} // <-- OJO: Asegúrate que esta imagen exista
+                source={require("../../assets/images/Logo-blanco.jpg")}
                 className="w-24 h-24"
                 resizeMode="contain"
               />
@@ -100,38 +104,37 @@ const DrawerLayout = () => {
           ),
         })}
       >
-        {/* --- Tus pantallas del menú --- */}
+        {/* --- Pantallas principales --- */}
         <Drawer.Screen
           name="home"
           options={{
             drawerLabel: "Home",
             title: "Home",
-            drawerIcon: ({ color, size }: { color: string, size: number }) => (
+            drawerIcon: ({ color, size }: { color: string; size: number }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
           }}
         />
+
         <Drawer.Screen
           name="profile/profile"
           options={{
             drawerLabel: "Profile",
             title: "Profile",
-            drawerIcon: ({ color, size }: { color: string, size: number }) => (
+            drawerIcon: ({ color, size }: { color: string; size: number }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
           }}
         />
 
-         <Drawer.Screen
+        <Drawer.Screen
           name="booknow"
           options={{
-            drawerLabel: 'Book Now',
-            title: 'Book Now',
-            drawerIcon: ({ color, size }: { color: string, size: number }) => (
-              <Ionicons name='calendar-outline'
-                size={size} color={color}>
-              </Ionicons> 
-            )
+            drawerLabel: "Book Now",
+            title: "Book Now",
+            drawerIcon: ({ color, size }: { color: string; size: number }) => (
+              <Ionicons name="calendar-outline" size={size} color={color} />
+            ),
           }}
         />
 
@@ -146,9 +149,10 @@ const DrawerLayout = () => {
           }}
         />
 
-         <Drawer.Screen
-           name="myreservations" 
-           options={{
+        {/* --- Pantalla agregada por tu equipo --- */}
+        <Drawer.Screen
+          name="myreservations"
+          options={{
             drawerLabel: "Mis Reservaciones",
             title: "Mis Reservaciones",
             drawerIcon: ({ color, size }) => (
@@ -157,36 +161,64 @@ const DrawerLayout = () => {
           }}
         />
 
-        {/* --- Pantallas Ocultas (Flujo de reserva) --- */}
+        {/* --- Tu pantalla Mis Autos --- */}
         <Drawer.Screen
-            name="carDetail"
-            options={{
-              drawerItemStyle: { display: 'none' },
-              title: "Detalles del Auto", // Título para el header
-            }}
-          />
-          <Drawer.Screen
-            name="payment"
-            options={{
-              drawerItemStyle: { display: 'none' },
-              title: "Pagar Reserva", // Título para el header
-            }}
-          />
+          name="autos/mycars"
+          options={{
+            drawerLabel: "Mis Autos",
+            title: "Mis Autos",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="car-sport-outline" size={size} color={color} />
+            ),
+          }}
+        />
 
+        {/* --- Pantalla oculta (editar autos) --- */}
+        <Drawer.Screen
+          name="autos/editcar"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Editar mi Auto",
+          }}
+        />
+
+        {/* --- Pantallas ocultas del flujo de reserva --- */}
+        <Drawer.Screen
+          name="carDetail"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Detalles del Auto",
+          }}
+        />
+        <Drawer.Screen
+          name="payment"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Pagar Reserva",
+          }}
+        />
+
+        {/* --- FAQ agregada por ti --- */}
+        <Drawer.Screen
+          name="help/faq"
+          options={{
+            drawerLabel: "Help & FAQ",
+            title: "Frequently Asked Questions",
+          }}
+        />
       </Drawer>
     </>
   );
 };
 
-
-// --- Estilos para el Modal (de desarrollo) ---
+// --- Estilos ---
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "flex-start",
     alignItems: "flex-end",
-    paddingTop: 60, // Ajusta esto a la altura de tu header
+    paddingTop: 60,
     paddingRight: 10,
   },
   notificationBox: {
@@ -209,7 +241,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: "#333",
     marginBottom: 25,
-  }
+  },
 });
 
 export default DrawerLayout;
