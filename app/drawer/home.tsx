@@ -1,4 +1,9 @@
 import {
+  FontAwesome,
+  Ionicons,
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
+import {
   Box,
   Button,
   ButtonIcon,
@@ -23,27 +28,18 @@ import {
   Text,
   VStack,
 } from '@gluestack-ui/themed';
-// Importamos los iconos que necesitamos
-import {
-  FontAwesome,
-  Ionicons,
-  MaterialCommunityIcons,
-} from '@expo/vector-icons';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-// 1. IMPORTANTE: Traemos 'Image' de 'react-native'
 import {
   Platform,
   Image as RNImage,
   ScrollView,
   StyleSheet,
 } from 'react-native';
-// Importamos SafeAreaView para respetar los bordes del teléfono
 import { SafeAreaView } from 'react-native-safe-area-context';
-// Importamos el DatePicker
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
 
 // --- Iconos Personalizados ---
 const CarIcon = (props: any) => (
