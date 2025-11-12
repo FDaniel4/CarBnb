@@ -210,6 +210,27 @@ const DrawerLayout = () => {
             title: "Editar mi Auto",
           }}
         />
+        <Drawer.Screen
+          name="help/support"
+          options={{
+            drawerLabel: "Terms & Conditions",
+            title: "Terminos y condiciones",
+          }}
+        />
+        <Drawer.Screen
+          name="help/soporteReal"
+          options={{
+            drawerLabel: "Support",
+            title: "TSoporte",
+          }}
+        />
+        <Drawer.Screen
+          name="help/logout"
+          options={{
+            drawerLabel: "Log out",
+            title: "logout",
+          }}
+        />
       </Drawer>
     </>
   );
