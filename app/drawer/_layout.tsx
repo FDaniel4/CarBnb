@@ -122,8 +122,7 @@ const DrawerLayout = () => {
           }}
         />
 
-        {/* --- Tu pantalla NUEVA que faltaba --- */}
-        <Drawer.Screen
+         <Drawer.Screen
           name="booknow"
           options={{
             drawerLabel: 'Book Now',
@@ -148,7 +147,7 @@ const DrawerLayout = () => {
         />
 
          <Drawer.Screen
-           name="myreservations" // <-- CORRECCIÓN 2: Aquí decía "myreservations/myreservations"
+           name="myreservations" 
            options={{
             drawerLabel: "Mis Reservaciones",
             title: "Mis Reservaciones",
@@ -157,6 +156,22 @@ const DrawerLayout = () => {
             ),
           }}
         />
+
+        {/* --- Pantallas Ocultas (Flujo de reserva) --- */}
+        <Drawer.Screen
+            name="carDetail"
+            options={{
+              drawerItemStyle: { display: 'none' },
+              title: "Detalles del Auto", // Título para el header
+            }}
+          />
+          <Drawer.Screen
+            name="payment"
+            options={{
+              drawerItemStyle: { display: 'none' },
+              title: "Pagar Reserva", // Título para el header
+            }}
+          />
 
       </Drawer>
     </>

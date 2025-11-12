@@ -18,7 +18,7 @@ import {
 } from '@gluestack-ui/themed';
 // Importamos los iconos que necesitamos
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useRouter } from 'expo-router'; // <--- 1. ASEGÚRATE QUE ESTO ESTÉ IMPORTADO
 import React, { useState } from 'react';
 // 1. IMPORTANTE: Traemos 'Image' de 'react-native'
 import {
@@ -80,11 +80,13 @@ const featuredCars = [
 
 // --- Componente de Tarjeta de Auto ---
 const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
+  const router = useRouter(); // <-- 2. AÑADIMOS EL ROUTER AQUÍ
+
   return (
     <Box
       bg="$background0"
       borderRadius="$lg"
-      // elevation={5} // <-- Arreglo de 'shadow'  <-- ¡HE QUITADO ESTA LÍNEA!
+      // elevation={5} // <-- Arreglo de 'shadow'
       overflow="hidden"
       width={220} // Ancho fijo para el carrusel
       mr="$4" // Margen a la derecha
@@ -141,7 +143,19 @@ const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
         bg="$orange500"
         borderRadius="$none"
         onPress={() => {
-          /* TODO: Navegar a la pantalla de detalles del auto */
+          // --- 3. ¡ESTA ES LA LÓGICA DE NAVEGACIÓN! ---
+          router.push({
+            pathname: '/drawer/carDetail', // <-- La nueva pantalla
+            params: {
+              // Pasamos todos los datos del auto
+              name: car.name,
+              style: car.style,
+              price: car.price,
+              passengers: car.passengers,
+              transmission: car.transmission,
+            },
+          });
+          // ------------------------------------------
         }}
       >
         <ButtonText>Select</ButtonText>
