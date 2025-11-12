@@ -1,14 +1,14 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import {
-    Box,
-    Button,
-    ButtonText,
-    Heading,
-    HStack,
-    Icon,
-    Image,
-    Text,
-    VStack,
+  Box,
+  Button,
+  ButtonText,
+  Heading,
+  HStack,
+  Icon,
+  Image,
+  Text,
+  VStack,
 } from '@gluestack-ui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
@@ -82,8 +82,9 @@ export default function CarDetailScreen() {
 
         {/* 2. Detalles del Auto */}
         <VStack p="$5" space="md" flex={1}>
-          <Heading size="2xl">{params.name}</Heading>
-          <Text size="lg" color="$text500">
+          {/* ----- CORRECCIÓN DE COLOR ----- */}
+          <Heading size="2xl" color="$text900">{params.name}</Heading>
+          <Text size="lg" color="$text900">
             {params.style}
           </Text>
 
@@ -96,17 +97,24 @@ export default function CarDetailScreen() {
             borderRadius="$lg"
           >
             <HStack alignItems="center" space="sm">
-              <UserIcon size="lg" color="gray" />
-              <Text fontSize="$md">{params.passengers} Pasajeros</Text>
+              {/* ----- CORRECCIÓN DE COLOR ----- */}
+              <UserIcon size="lg" color="$text900" />
+              <Text fontSize="$md" color="$text900">
+                {params.passengers} Pasajeros
+              </Text>
             </HStack>
             <HStack alignItems="center" space="sm">
-              <CogIcon size="lg" color="gray" />
-              <Text fontSize="$md">{params.transmission}</Text>
+              {/* ----- CORRECCIÓN DE COLOR ----- */}
+              <CogIcon size="lg" color="$text900" />
+              <Text fontSize="$md" color="$text900">
+                {params.transmission}
+              </Text>
             </HStack>
           </HStack>
 
           {/* Descripción Falsa */}
-          <Text mt="$4">
+          {/* ----- CORRECCIÓN DE COLOR ----- */}
+          <Text mt="$4" color="$text990">
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
             eiusmod tempor incididunt ut labore et dolore magna aliqua.
           </Text>
@@ -116,7 +124,8 @@ export default function CarDetailScreen() {
           <HStack justifyContent="space-between" alignItems="center" mb="$4">
             <Heading size="3xl" color="$orange500">
               ${params.price}
-              <Text size="md" color="$text500">
+              {/* ----- CORRECCIÓN DE COLOR ----- */}
+              <Text size="md" color="$text900">
                 /día
               </Text>
             </Heading>

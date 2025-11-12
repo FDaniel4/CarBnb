@@ -6,6 +6,7 @@ import {
   ChevronDownIcon,
   ChevronRightIcon,
   CloseIcon,
+  // Importamos 'Image' de Gluestack, aunque usaremos la nativa para el carrusel
   Image as GluestackImage,
   Heading,
   HStack,
@@ -23,13 +24,17 @@ import {
   VStack,
 } from '@gluestack-ui/themed';
 // Importamos los iconos que necesitamos
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import {
+  FontAwesome,
+  Ionicons,
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react'; // <--- Importamos useState
+import React, { useState } from 'react';
 // 1. IMPORTANTE: Traemos 'Image' de 'react-native'
 import {
   Platform,
-  Image as RNImage, // <--- Importamos Platform
+  Image as RNImage,
   ScrollView,
   StyleSheet,
 } from 'react-native';
@@ -47,33 +52,36 @@ const CarIcon = (props: any) => (
 const UserIcon = (props: any) => (
   <Icon as={FontAwesome} name="user" {...props} />
 );
-const CogIcon = (props: any) => (
-  <Icon as={Ionicons} name="cog" {...props} />
+const AutoIcon = (props: any) => (
+  <Icon as={MaterialCommunityIcons} name="cogs" {...props} /> // Icono para Automático
+);
+const ManualIcon = (props: any) => (
+  <Icon as={MaterialCommunityIcons} name="cog-outline" {...props} /> // Icono para Manual
 );
 const CalendarIcon = (props: any) => (
   <Icon as={Ionicons} name="calendar-outline" {...props} />
 );
 
-// --- Datos de los Autos ---
-// ¡Usamos las imágenes que acabas de subir!
+// --- Datos de los Autos (ACTUALIZADOS) ---
 const featuredCars = [
   {
     name: 'Kia Soul',
-    style: '6 Puertas', // Ajusta esto
+    style: '6 Puertas',
     image: require('@/assets/images/Autos/aveo_5door_lrg.jpg'), // CAMBIA ESTO por 'kia_soul.jpg' si la tienes
-    price: '8',
+    price: '899',
     passengers: 4,
-    transmission: 'Automático',
+    transmission: 'Auto', // <-- VALOR CORTO
     brandLogo:
       'https://logodownload.org/wp-content/uploads/2017/02/mex-rent-a-car-logo-1.png', // Logo de Mex
   },
   {
     name: 'Ford Mustang',
-    style: '2 Puertas', // Ajusta esto
+    color: 'Rojo',
+    style: '2 Puertas',
     image: require('@/assets/images/Autos/jetta_lrg.jpg'), // CAMBIA ESTO por 'ford_mustang.jpg' si la tienes
-    price: '63',
+    price: '639',
     passengers: 2,
-    transmission: 'Automático',
+    transmission: 'Auto', // <-- VALOR CORTO
     brandLogo:
       'https://companieslogo.com/img/orig/CAR-c80c6819.png?t=1659337581', // Logo de Budget
   },
@@ -81,17 +89,17 @@ const featuredCars = [
     name: 'Volkswagen Vento',
     style: '4 Puertas',
     image: require('@/assets/images/Autos/vento_lrg.jpg'),
-    price: '4',
+    price: '499',
     passengers: 4,
-    transmission: 'Automático',
+    transmission: 'Manual', // <-- VALOR CORTO
     brandLogo:
       'https://upload.wikimedia.org/wikipedia/commons/3/30/Bob_Finance_logo.png', // Logo de Bob
   },
 ];
 
-// --- Componente de Tarjeta de Auto ---
+// --- Componente de Tarjeta de Auto (ACTUALIZADO) ---
 const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
-  const router = useRouter(); // <-- 2. AÑADIMOS EL ROUTER AQUÍ
+  const router = useRouter(); 
 
   return (
     <Box
@@ -112,8 +120,10 @@ const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
       <VStack p="$3" space="xs">
         <HStack justifyContent="space-between" alignItems="center">
           <Box>
-            <Heading size="sm">{car.name}</Heading>
-            <Text size="xs" color="$text500">
+            <Heading size="sm" color="$text900">
+              {car.name}
+            </Heading>
+            <Text size="xs" color="$text900">
               {car.style}
             </Text>
           </Box>
@@ -137,15 +147,27 @@ const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
             /día
           </Text>
         </HStack>
-        {/* Arreglo de 'color': quitado del HStack */}
-        <HStack space="sm" alignItems="center">
+
+        {/* ----- ¡AQUÍ ESTÁ LA CORRECCIÓN DE ICONOS! (Puertas eliminado) ----- */}
+        <HStack space="sm" alignItems="center" mt="$1">
+          {/* Pasajeros */}
           <HStack alignItems="center" space="xs">
-            <UserIcon size="xs" color="gray" />
-            <Text size="xs">{car.passengers}</Text>
+            <UserIcon size="sm" color="$text800" />
+            <Text size="sm" color="$text800">
+              {car.passengers}
+            </Text>
           </HStack>
+          {/* Puertas (ELIMINADO) */}
+          {/* Transmisión (Condicional) */}
           <HStack alignItems="center" space="xs">
-            <CogIcon size="xs" color="gray" />
-            <Text size="xs">{car.transmission}</Text>
+            {car.transmission === 'Auto' ? (
+              <AutoIcon size="sm" color="$text800" />
+            ) : (
+              <ManualIcon size="sm" color="$text800" />
+            )}
+            <Text size="sm" color="$text800">
+              {car.transmission}
+            </Text>
           </HStack>
         </HStack>
       </VStack>
@@ -244,13 +266,16 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* Usamos ScrollView para toda la pantalla */}
       <ScrollView nestedScrollEnabled={true}>
-        {/* Arreglo de ScrollView: quitado 'flex={1}' */}
         <Box bg="$white" p="$5">
           {/* ----- 1. Featured ----- */}
           <HStack justifyContent="space-between" alignItems="center" mb="$4">
-            <Heading size="2xl" color="$text900">Featured</Heading>
+            <Heading size="2xl" color="$text900">
+              Featured
+            </Heading>
             <HStack alignItems="center" space="sm">
-              <Text size="xs" color= "text900">DARK MODE</Text>
+              <Text size="xs" color="$text900">
+                DARK MODE
+              </Text>
               <Switch
                 value={isDarkMode}
                 onToggle={() => setIsDarkMode(!isDarkMode)}
@@ -283,7 +308,9 @@ export default function HomeScreen() {
                 openModal(['New York', 'Los Angeles', 'Chicago', 'Miami'])
               } // <--- ACCIÓN
             >
-              <ButtonText color={selectedCity === 'City' ? '$text500' : '$text800'}>
+              <ButtonText
+                color={selectedCity === 'City' ? '$text500' : '$text800'}
+              >
                 {selectedCity}
               </ButtonText>
               <ButtonIcon as={ChevronDownIcon} color="$text700" />
@@ -375,7 +402,9 @@ export default function HomeScreen() {
         <ModalBackdrop />
         <ModalContent bg="$orange100" borderRadius="$lg">
           <ModalHeader borderBottomWidth={0}>
-            <Heading size="lg" color="$orange500">Select City</Heading>
+            <Heading size="lg" color="$orange500">
+              Select City
+            </Heading>
             <ModalCloseButton>
               <Icon as={CloseIcon} color="$orange500" />
             </ModalCloseButton>
