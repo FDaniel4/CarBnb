@@ -262,7 +262,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       {/* Usamos ScrollView para toda la pantalla */}
       <ScrollView nestedScrollEnabled={true}>
-        <Box bg="$white" p="$5">
+        <Box bg="$white" p="$1">
           {/* ----- 1. Featured ----- */}
           <HStack justifyContent="space-between" alignItems="center" mb="$4">
             <Heading size="2xl" color="$text900">

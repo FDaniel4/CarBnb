@@ -56,7 +56,7 @@ const DrawerLayout = () => {
           drawerActiveTintColor: "orange",
           headerShadowVisible: false,
           headerStyle: {
-            height: 130,
+            height: 120,
             backgroundColor: "white",
           },
           headerTitleAlign: "center",
@@ -178,6 +178,9 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Help & FAQ",
             title: "Frequently Asked Questions",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="help-outline" size={size} color={color} />
+            ),
           }}
         />
 
@@ -215,6 +218,10 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Terms & Conditions",
             title: "Terminos y condiciones",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="document-text-outline" size={size} color={color} />
+              
+            ),
           }}
         />
         <Drawer.Screen
@@ -222,6 +229,9 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Support",
             title: "TSoporte",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="call-outline" size={size} color={color} />
+            ),
           }}
         />
         <Drawer.Screen
@@ -229,6 +239,9 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Log out",
             title: "logout",
+            drawerIcon: ({ color, size }) => (
+              <Ionicons name="log-out-outline" size={size} color={color} />
+            ),
           }}
         />
       </Drawer>
