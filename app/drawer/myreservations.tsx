@@ -1,17 +1,22 @@
 import {
-    Box,
-    Heading,
-    HStack,
-    Icon,
-    Image,
-    Text,
-    VStack,
+  Box,
+  Heading,
+  HStack,
+  Icon,
+  Image,
+  Text,
+  VStack,
 } from '@gluestack-ui/themed';
 // Importamos los iconos que necesitamos
-import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
+import {
+  FontAwesome,
+  // Ionicons, // Ya no se usa el BackIcon
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 // Importamos SafeAreaView para respetar los bordes del teléfono
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Iconos Personalizados ---
@@ -105,7 +110,8 @@ const ReservationCard = ({ item }: { item: ReservationItem }) => {
       >
         {item.users && ( // Solo muestra si existe
           <HStack space="sm" alignItems="center">
-            <UserIcon size="sm" color="gray" />
+            {/* CORRECCIÓN: 'size' y 'color' arreglados */}
+            <UserIcon size={14} color="$text600" />
             <Text size="sm" color="$text600">
               {item.users}
             </Text>
@@ -113,7 +119,8 @@ const ReservationCard = ({ item }: { item: ReservationItem }) => {
         )}
         {item.bags && ( // Solo muestra si existe
           <HStack space="sm" alignItems="center">
-            <BagIcon size="sm" color="gray" />
+            {/* CORRECCIÓN: 'size' y 'color' arreglados */}
+            <BagIcon size={14} color="$text600" />
             <Text size="sm" color="$text600">
               {item.bags}
             </Text>
@@ -126,16 +133,37 @@ const ReservationCard = ({ item }: { item: ReservationItem }) => {
 
 // --- Pantalla Principal "My Reservations" ---
 export default function MyReservationsScreen() {
+  const router = useRouter(); // <-- OBTENEMOS EL ROUTER
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView>
         <Box p="$5">
-          {/* ----- 1. Título ----- */}
-          <HStack alignItems="center" space="sm" mb="$6" pt="$4">
-            <ReservationIcon size="xl" color="$orange500" />
-            <Heading size="2xl" color="$text900">
-              My reservations
-            </Heading>
+          {/* ----- 1. Título (CORREGIDO) ----- */}
+          <HStack
+            alignItems="center"
+            justifyContent="space-between" // <-- 1. Cambiado a 'space-between'
+            w="$full" // <-- 2. Añadido ancho completo
+            mb="$6"
+            pt="$4"
+          >
+            {/* Izquierda: Botón de Perfil */}
+            <TouchableOpacity
+              onPress={() => router.push('/drawer/profile/profile')}
+            >
+              <UserIcon size={20} color="$text800" />
+            </TouchableOpacity>
+
+            {/* Centro: Icono y Título (agrupados) */}
+            <HStack alignItems="center" space="sm">
+              <ReservationIcon size={24} color="$orange500" />
+              <Heading size="2xl" color="$text900">
+                Mis Reservaciones
+              </Heading>
+            </HStack>
+
+            {/* Derecha: Un "spacer" invisible para centrar el título */}
+            <Box w={32} />
           </HStack>
 
           {/* ----- 2. Reservas Antiguas ----- */}

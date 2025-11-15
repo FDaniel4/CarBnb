@@ -2,77 +2,88 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   Image,
-  ScrollView, // <-- 1. IMPORTAMOS SCROLLVIEW
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+// 1. IMPORTAMOS EL SAFEAREADVIEW CORRECTO
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Profile = () => {
   const router = useRouter();
 
   return (
-    // 2. REEMPLAZAMOS EL VIEW POR SCROLLVIEW
-    // Usamos contentContainerStyle para que el padding y centrado se apliquen al *contenido*
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* 1. Área de la Imagen de Perfil */}
-      <View style={styles.avatarContainer}>
-        {/* Imagen del avatar */}
-        <Image
-          source={{
-            uri: 'https://randomuser.me/api/portraits/women/44.jpg',
-          }}
-          style={styles.avatarImage}
-        />
-      </View>
-
-      {/* 2. Información del Usuario */}
-      <View style={styles.infoContainer}>
-        <View style={styles.nameRow}>
-          <Text style={styles.nameText}>Brendan Moore</Text>
-          <Text style={styles.verifiedIcon}>{' \u2713'}</Text>
+    // 2. USAMOS SAFEARAEVIEW COMO EL CONTENEDOR PRINCIPAL
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* 1. Área de la Imagen de Perfil */}
+        <View style={styles.avatarContainer}>
+          {/* Imagen del avatar */}
+          <Image
+            source={{
+              uri: 'https://randomuser.me/api/portraits/women/44.jpg',
+            }}
+            style={styles.avatarImage}
+          />
         </View>
-        <Text style={styles.emailText}>brendamoo@gmail.com</Text>
-        <Text style={styles.phoneText}>+52 (449) 000 0000</Text>
-      </View>
 
-      {/* 3. Métricas (Cars published y Reservations) */}
-      <View style={styles.metricsContainer}>
-        <View style={styles.metricItem}>
-          <Text style={styles.metricValue}>183</Text>
-          <Text style={styles.metricLabel}>Cars published</Text>
+        {/* 2. Información del Usuario */}
+        <View style={styles.infoContainer}>
+          <View style={styles.nameRow}>
+            <Text style={styles.nameText}>Brendan Moore</Text>
+            <Text style={styles.verifiedIcon}>{' \u2713'}</Text>
+          </View>
+          <Text style={styles.emailText}>brendamoo@gmail.com</Text>
+          <Text style={styles.phoneText}>+52 (449) 000 0000</Text>
         </View>
-        <View style={styles.metricItem}>
-          <Text style={styles.metricValueBold}>2,824</Text>
-          <Text style={styles.metricLabel}>Reservations</Text>
+
+        {/* 3. Métricas (Cars published y Reservations) */}
+        <View style={styles.metricsContainer}>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValue}>183</Text>
+            <Text style={styles.metricLabel}>Cars published</Text>
+          </View>
+          <View style={styles.metricItem}>
+            <Text style={styles.metricValueBold}>2,824</Text>
+            <Text style={styles.metricLabel}>Reservations</Text>
+          </View>
         </View>
-      </View>
 
-      {/* 4. Botones */}
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.buttonOrange}
-          onPress={() => router.push('/change-password')} // Asumo que esta ruta existe
-        >
-          <Text style={styles.buttonText}>Change password</Text>
-        </TouchableOpacity>
+        {/* 4. Botones */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.buttonOrange}
+            onPress={() => router.push('/change-password')} // Asumo que esta ruta existe
+          >
+            <Text style={styles.buttonText}>Change password</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.buttonOrange}>
-          <Text style={styles.buttonText}>Reservations</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          {/* ----- ¡AQUÍ ESTÁ LA CORRECCIÓN! ----- */}
+          <TouchableOpacity
+            style={styles.buttonOrange}
+            onPress={() => router.push('/drawer/myreservations')} // <-- Ruta a tus reservaciones
+          >
+            <Text style={styles.buttonText}>Reservations</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 // ---
 
 const styles = StyleSheet.create({
-  container: {
-    // flex: 1, // <-- 3. CAMBIAMOS FLEX: 1
-    flexGrow: 1, // <-- POR FLEXGROW: 1 (para que pueda crecer)
+  // 3. AÑADIMOS EL ESTILO PARA SAFEARAEVIEW
+  safeArea: {
+    flex: 1,
     backgroundColor: '#fff',
+  },
+  container: {
+    flexGrow: 1,
+    // backgroundColor: '#fff', // <--- Quitado, ya está en safeArea
     padding: 20,
     alignItems: 'center',
   },
