@@ -1,17 +1,34 @@
 import { router } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, {useState} from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, Alert } from 'react-native';
+
+import { signOut } from 'firebase/auth';
+import { auth } from '@/utils/firebaseConfig';
 
 const LogoutButton = () => {
+  const [loading, setLoading] = useState(false);
+
   const handleLogout = () => {
-    // Aquí puedes limpiar tokens, cerrar sesión, etc.
-    router.replace('/login/WelcomeScreen'); // Redirige a la pantalla Welcome
+    setLoading(true);
+    signOut(auth)
+      .then(() => {
+        console.log('User signed out successfully');
+      })
+      .catch((error) => {
+        console.error('Logout Error:', error);
+        Alert.alert('Error', 'Could not sign out.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Log Out</Text>
+      <TouchableOpacity style={styles.button} onPress={handleLogout} disabled={loading}>
+        <Text style={styles.buttonText}>
+          {loading ? 'Logging out...' : 'Log Out'}
+        </Text>
       </TouchableOpacity>
     </View>
   );

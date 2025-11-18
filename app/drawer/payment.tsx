@@ -1,34 +1,24 @@
-import {
-    Box,
-    Button,
-    ButtonText,
-    CheckCircleIcon,
-    CloseIcon,
-    Heading,
-    HStack,
-    Icon,
-    Image,
-    Input,
-    InputField,
-    Modal,
-    ModalBackdrop,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalHeader,
-    Pressable,
-    Text,
-    VStack,
-} from '@gluestack-ui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Modal,
+  Pressable,
+  Image as RNImage, 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Ionicons } from '@expo/vector-icons';
 
 export default function PaymentScreen() {
   const router = useRouter();
-  
-  // 1. Obtenemos los parámetros que 'carDetail.tsx' nos envió
+
+  // 1. Obtenemos los parámetros
   const params = useLocalSearchParams() as {
     price: string;
     carName: string;
@@ -37,165 +27,183 @@ export default function PaymentScreen() {
   // Usamos el precio que nos pasaron, o '300' como fallback
   const priceToPay = params.price || '300';
 
-  // Estado para el modal de éxito
+  // Estado para el modal de éxito 
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // Lógica para el botón "Pay"
+  // Lógica para el botón "Pay" 
   const handlePayment = () => {
     // Aquí iría la lógica de Stripe, PayPal, etc.
-    // Por ahora, solo mostramos el modal de éxito.
     setShowSuccessModal(true);
   };
 
   const handleGoHome = () => {
     setShowSuccessModal(false);
-    // Usamos 'navigate' para limpiar el historial y volver a home
     router.navigate('/drawer/home');
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView>
-        <VStack p="$5" space="lg">
+        <View className="p-5 space-y-6">
           {/* ----- 1. Detalles de la Tarjeta ----- */}
-          <VStack space="md">
-            {/* Título de sección "CARD DETAILS" */}
-            <Box bg="$orange100" p="$3" borderRadius="$md">
-              <Text color="$orange500" fontWeight="$bold">
-                CARD DETAILS
-              </Text>
-            </Box>
+          <View className="space-y-4">
+            <View className="bg-orange-100 p-3 rounded-md">
+              <Text className="text-orange-500 font-bold">CARD DETAILS</Text>
+            </View>
 
-            <Input variant="underlined" size="lg">
-              <InputField placeholder="Card holder name" />
-            </Input>
+            <TextInput
+              placeholder="Card holder name"
+              placeholderTextColor="#9ca3af"
+              className="border-b border-gray-300 p-3 text-lg"
+            />
 
-            <Input variant="underlined" size="lg">
-              <InputField placeholder="Card number" keyboardType="numeric" />
-            </Input>
+            <TextInput
+              placeholder="Card number"
+              keyboardType="numeric"
+              placeholderTextColor="#9ca3af"
+              className="border-b border-gray-300 p-3 text-lg"
+            />
 
-            <HStack space="md">
-              <Input variant="underlined" size="lg" flex={1}>
-                <InputField placeholder="Exp. Date" />
-              </Input>
-              <Input variant="underlined" size="lg" flex={1}>
-                <InputField placeholder="CVV" keyboardType="numeric" />
-              </Input>
-            </HStack>
-          </VStack>
+            <View className="flex-row space-x-4">
+              <TextInput
+                placeholder="Exp. Date"
+                placeholderTextColor="#9ca3af"
+                className="border-b border-gray-300 p-3 text-lg flex-1"
+              />
+              <TextInput
+                placeholder="CVV"
+                keyboardType="numeric"
+                placeholderTextColor="#9ca3af"
+                className="border-b border-gray-300 p-3 text-lg flex-1"
+              />
+            </View>
+          </View>
 
           {/* ----- 2. Dirección de Facturación ----- */}
-          <VStack space="md">
+          <View className="space-y-4">
             {/* Título de sección "BILLING ADDRESS" */}
-            <Box bg="$orange100" p="$3" borderRadius="$md">
-              <Text color="$orange500" fontWeight="$bold">
+            <View className="bg-orange-100 p-3 rounded-md">
+              <Text className="text-orange-500 font-bold">
                 BILLING ADDRESS
               </Text>
-            </Box>
+            </View>
 
-            <Input variant="underlined" size="lg">
-              <InputField placeholder="Address" />
-            </Input>
+            <TextInput
+              placeholder="Address"
+              placeholderTextColor="#9ca3af"
+              className="border-b border-gray-300 p-3 text-lg"
+            />
 
-            <Input variant="underlined" size="lg">
-              <InputField placeholder="City" />
-            </Input>
+            <TextInput
+              placeholder="City"
+              placeholderTextColor="#9ca3af"
+              className="border-b border-gray-300 p-3 text-lg"
+            />
 
-            <HStack space="md">
-              <Input variant="underlined" size="lg" flex={1}>
-                <InputField placeholder="State" />
-              </Input>
-              <Input variant="underlined" size="lg" flex={1}>
-                <InputField placeholder="Zip Code" keyboardType="numeric" />
-              </Input>
-            </HStack>
+            <View className="flex-row space-x-4">
+              <TextInput
+                placeholder="State"
+                placeholderTextColor="#9ca3af"
+                className="border-b border-gray-300 p-3 text-lg flex-1"
+              />
+              <TextInput
+                placeholder="Zip Code"
+                keyboardType="numeric"
+                placeholderTextColor="#9ca3af"
+                className="border-b border-gray-300 p-3 text-lg flex-1"
+              />
+            </View>
 
-            <Input variant="underlined" size="lg">
-              <InputField placeholder="Country" />
-            </Input>
-          </VStack>
+            <TextInput
+              placeholder="Country"
+              placeholderTextColor="#9ca3af"
+              className="border-b border-gray-300 p-3 text-lg"
+            />
+          </View>
 
           {/* ----- 3. Botón de Pago ----- */}
-          <VStack space="md" mt="$4">
-            <Box bg="$orange100" p="$4" borderRadius="$lg">
-              <Button
-                bg="$orange500"
-                borderRadius="$lg"
-                size="lg"
+          <View className="space-y-4 mt-4">
+            <View className="bg-orange-100 p-4 rounded-lg">
+              <TouchableOpacity
+                className="bg-orange-500 rounded-lg p-3.5" 
                 onPress={handlePayment}
               >
-                <ButtonText fontSize="$xl" fontWeight="$bold">
+                <Text className="text-white text-xl font-bold text-center">
                   Pay ${priceToPay}
-                </ButtonText>
-              </Button>
-            </Box>
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {/* ----- 4. Otros Métodos de Pago ----- */}
-            <HStack space="md" justifyContent="center">
-              {/* Reemplaza estos 'uri' con tus imágenes en assets/images */}
-              <Pressable>
-                <Image
+            <View className="flex-row space-x-4 justify-center">
+              <TouchableOpacity>
+                <RNImage
                   source={{
                     uri: 'https://placehold.co/150x50/f40f02/ffffff?text=OXXO&font=raleway',
                   }}
                   alt="OXXO"
-                  style={styles.paymentLogo}
+                  className="w-[150px] h-[50px]"
+                  resizeMode="contain"
                 />
-              </Pressable>
-              <Pressable>
-                <Image
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <RNImage
                   source={{
                     uri: 'https://placehold.co/150x50/0070ba/ffffff?text=PayPal&font=raleway',
                   }}
                   alt="PayPal"
-                  style={styles.paymentLogo}
+                  className="w-[150px] h-[50px]"
+                  resizeMode="contain"
                 />
-              </Pressable>
-            </HStack>
-          </VStack>
-        </VStack>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* ----- Modal de Pago Exitoso ----- */}
       <Modal
-        isOpen={showSuccessModal}
-        onClose={handleGoHome}
+        transparent={true}
+        visible={showSuccessModal}
+        animationType="fade"
+        onRequestClose={handleGoHome}
       >
-        <ModalBackdrop />
-        <ModalContent borderRadius="$lg">
-          <ModalHeader>
-            <HStack space="sm" alignItems="center">
-              <Icon as={CheckCircleIcon} color="$success500" size="lg" />
-              <Heading size="lg">¡Pago Exitoso!</Heading>
-            </HStack>
-            <ModalCloseButton>
-              <Icon as={CloseIcon} />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody>
-            <VStack space="md">
-              <Text>
+        <Pressable
+          className="flex-1 justify-center items-center bg-black/50 p-5"
+          onPress={handleGoHome}
+        >
+          <Pressable className="bg-white rounded-lg w-full max-w-sm">
+            <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+              <View className="flex-row items-center space-x-2">
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color="#22c55e" 
+                />
+                <Text className="text-lg font-bold text-gray-800">
+                  ¡Pago Exitoso!
+                </Text>
+              </View>
+              <TouchableOpacity onPress={handleGoHome}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="p-4 space-y-4">
+              <Text className="text-base text-gray-700">
                 Tu reservación para el {params.carName} ha sido confirmada.
               </Text>
-              <Button bg="$orange500" onPress={handleGoHome}>
-                <ButtonText>Volver al Inicio</ButtonText>
-              </Button>
-            </VStack>
-          </ModalBody>
-        </ModalContent>
+              <TouchableOpacity
+                className="bg-orange-500 rounded-lg p-3"
+                onPress={handleGoHome}
+              >
+                <Text className="text-white text-center font-bold">
+                  Volver al Inicio
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  paymentLogo: {
-    width: 150,
-    height: 50,
-    resizeMode: 'contain',
-  },
-});

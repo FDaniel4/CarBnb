@@ -1,35 +1,29 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import {
-    Box,
-    Heading,
-    HStack,
-    Icon,
-    Image,
-    Pressable,
-    Text,
-    VStack,
-} from '@gluestack-ui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import {
+  ScrollView,
+  View,
+  Text,
+  Pressable, 
+  Image as RNImage, 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Iconos Personalizados ---
-const UserIcon = (props: any) => (
-  <Icon as={FontAwesome} name="user" {...props} />
+const UserIcon = (props: { size: number; color: string }) => (
+  <FontAwesome name="user" size={props.size} color={props.color} />
 );
-const CogIcon = (props: any) => (
-  <Icon as={Ionicons} name="cog" {...props} />
+const CogIcon = (props: { size: number; color: string }) => (
+  <Ionicons name="cog" size={props.size} color={props.color} />
 );
 
 // --- Datos de los Autos Disponibles (Simulación) ---
-// (Usamos los datos de tus imágenes de /Autos)
 const availableCars = [
   {
     id: 1,
     name: 'Volkswagen Vento',
     style: '4 Puertas',
-    image: require('@/assets/images/Autos/vento_lrg.jpg'),
+    image: require('../../assets/images/Autos/vento_lrg.jpg'),
     price: '4',
     passengers: 4,
     transmission: 'Automático',
@@ -38,7 +32,7 @@ const availableCars = [
     id: 2,
     name: 'Chevrolet Aveo',
     style: '5 Puertas',
-    image: require('@/assets/images/Autos/aveo_5door_lrg.jpg'),
+    image: require('../../assets/images/Autos/aveo_5door_lrg.jpg'),
     price: '8',
     passengers: 5,
     transmission: 'Automático',
@@ -47,7 +41,7 @@ const availableCars = [
     id: 3,
     name: 'Nissan Kicks',
     style: 'SUV',
-    image: require('@/assets/images/Autos/kicks_lrg.jpg'),
+    image: require('../../assets/images/Autos/kicks_lrg.jpg'),
     price: '12',
     passengers: 5,
     transmission: 'Automático',
@@ -56,21 +50,21 @@ const availableCars = [
     id: 4,
     name: 'Chevrolet Trax',
     style: 'SUV',
-    image: require('@/assets/images/Autos/trax_lrg.jpg'),
+    image: require('../../assets/images/Autos/trax_lrg.jpg'),
     price: '15',
     passengers: 5,
     transmission: 'Automático',
   },
 ];
 
-// --- Componente de la Tarjeta de Auto (en lista) ---
+// --- Componente de la Tarjeta de Auto  ---
 const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
   const router = useRouter();
 
   return (
     <Pressable
       onPress={() => {
-        // Al seleccionar, vamos al detalle del auto
+        // Lógica de navegación 
         router.push({
           pathname: '/drawer/carDetail',
           params: {
@@ -82,69 +76,52 @@ const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
           },
         });
       }}
-      bg="$background0"
-      borderRadius="$lg"
-      borderWidth={1}
-      borderColor="$coolGray200"
-      overflow="hidden"
-      sx={{
-        ':active': { bg: '$background100' },
-      }}
+      // 5. Reemplazamos 'sx' con 'className' funcional
+      className="flex-row rounded-lg border border-gray-200 overflow-hidden bg-white active:bg-gray-100"
     >
-      <HStack>
-        {/* Imagen */}
-        <Box w={140} h={100} bg="$background100">
-          <Image
+      <View className="flex-row">
+        <View className="w-[140px] h-[100px] bg-gray-100">
+          <RNImage
             source={car.image}
             alt={car.name}
-            style={{ width: '100%', height: '100%' }}
+            className="w-full h-full"
             resizeMode="contain"
           />
-        </Box>
+        </View>
 
-        {/* Info */}
-        <VStack p="$3" flex={1} space="xs">
-          {/* ----- CORRECCIÓN DE COLOR ----- */}
-          <Heading size="md" color="$text900">
+        <View className="p-3 flex-1 space-y-1">
+          <Text className="text-base font-bold text-gray-900">
             {car.name}
-          </Heading>
+          </Text>
 
-          <HStack space="sm" alignItems="center">
-            <HStack alignItems="center" space="xs">
-              {/* ----- CORRECCIÓN DE COLOR ----- */}
-              <UserIcon size="xs" color="$text800" />
-              <Text size="xs" color="$text800">
-                {car.passengers}
-              </Text>
-            </HStack>
-            <HStack alignItems="center" space="xs">
-              {/* ----- CORRECCIÓN DE COLOR ----- */}
-              <CogIcon size="xs" color="$text800" />
-              <Text size="xs" color="$text800">
-                {car.transmission}
-              </Text>
-            </HStack>
-          </HStack>
+          <View className="flex-row space-x-3 items-center">
+            <View className="flex-row items-center space-x-1">
+              <UserIcon size={14} color="#374151" />
+              <Text className="text-xs text-gray-800">{car.passengers}</Text>
+            </View>
+            <View className="flex-row items-center space-x-1">
+              <CogIcon size={14} color="#374151" />
+              <Text className="text-xs text-gray-800">{car.transmission}</Text>
+            </View>
+          </View>
 
-          <Box flex={1} />
+          <View className="flex-1" />
 
-          <HStack>
-            <Heading size="lg" color="$orange500">
+          <View>
+            <Text className="text-xl font-bold text-orange-500">
               ${car.price}
-              <Text size="xs" color="$text900">
-                /día
-              </Text>
-            </Heading>
-          </HStack>
-        </VStack>
-      </HStack>
+              <Text className="text-xs font-normal text-gray-900"> /día</Text>
+            </Text>
+          </View>
+        </View>
+      </View>
     </Pressable>
   );
 };
 
-// --- Pantalla de Resultados de Búsqueda ---
+// --- Pantalla de Resultados de Búsqueda  ---
 export default function SearchResultsScreen() {
-  // Obtenemos los filtros de la pantalla 'home'
+  // Lógica de 'params' 
   const params = useLocalSearchParams() as {
     city?: string;
     from?: string;
@@ -152,33 +129,23 @@ export default function SearchResultsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView>
-        <VStack p="$5" space="md">
-          {/* Título */}
-          <Box>
-            {/* (Esto ya estaba corregido) */}
-            <Heading size="2xl" color="$text900">
+        <View className="p-5 space-y-4">
+          <View>
+            <Text className="text-2xl font-bold text-gray-900">
               Resultados en {params.city || 'tu ciudad'}
-            </Heading>
-            <Text color="$text900" size="sm">
+            </Text>
+            <Text className="text-sm text-gray-900">
               Desde {params.from || '...'} hasta {params.to || '...'}
             </Text>
-          </Box>
+          </View>
 
-          {/* Lista de Autos */}
           {availableCars.map((car) => (
             <CarListItem key={car.id} car={car} />
           ))}
-        </VStack>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-});

@@ -1,33 +1,40 @@
-import {
-    Box,
-    Heading,
-    HStack,
-    Icon,
-    Image,
-    Text,
-    VStack,
-} from '@gluestack-ui/themed';
-// Importamos los iconos que necesitamos
 import { FontAwesome, MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
-// Importamos SafeAreaView para respetar los bordes del teléfono
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  Image as RNImage, 
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Iconos Personalizados ---
-const ReservationIcon = (props: any) => (
-  <Icon
-    as={MaterialCommunityIcons}
-    name="clipboard-check-outline"
-    {...props}
-  />
-);
-const UserIcon = (props: any) => (
-  <Icon as={FontAwesome} name="user-o" {...props} />
-);
-const BagIcon = (props: any) => (
-  <Icon as={MaterialCommunityIcons} name="briefcase-outline" {...props} />
-);
+const ReservationIcon = (props: { size: 'xl'; color: string }) => {
+  const sizeMap = { xl: 28 }; 
+  return (
+    <MaterialCommunityIcons
+      name="clipboard-check-outline"
+      size={sizeMap[props.size]}
+      color={props.color}
+    />
+  );
+};
+const UserIcon = (props: { size: 'sm'; color: string }) => {
+  const sizeMap = { sm: 16 }; 
+  return (
+    <FontAwesome name="user-o" size={sizeMap[props.size]} color={props.color} />
+  );
+};
+const BagIcon = (props: { size: 'sm'; color: string }) => {
+  const sizeMap = { sm: 16 }; 
+  return (
+    <MaterialCommunityIcons
+      name="briefcase-outline"
+      size={sizeMap[props.size]}
+      color={props.color}
+    />
+  );
+};
 
 // --- 1. Definimos un TIPO flexible para las reservaciones ---
 type ReservationItem = {
@@ -41,19 +48,19 @@ type ReservationItem = {
 const oldReservations: ReservationItem[] = [
   {
     id: 1,
-    image: require('@/assets/images/Autos/aveo_5door_lrg.jpg'),
+    image: require('../../assets/images/Autos/aveo_5door_lrg.jpg'),
     users: 5,
     bags: 4,
   },
   {
     id: 2,
-    image: require('@/assets/images/Autos/vento_lrg.jpg'),
+    image: require('../../assets/images/Autos/vento_lrg.jpg'),
     users: 5,
     bags: 4,
   },
   {
     id: 3,
-    image: require('@/assets/images/Autos/kicks_lrg.jpg'),
+    image: require('../../assets/images/Autos/kicks_lrg.jpg'),
     users: 5,
     bags: 2,
   },
@@ -62,87 +69,64 @@ const oldReservations: ReservationItem[] = [
 const futureReservations: ReservationItem[] = [
   {
     id: 4,
-    image: require('@/assets/images/Autos/cavalier_lrg.jpg'),
+    image: require('../../assets/images/Autos/cavalier_lrg.jpg'),
     bags: 4,
   },
   {
     id: 5,
-    image: require('@/assets/images/Autos/trax_lrg.jpg'),
+    image: require('../../assets/images/Autos/trax_lrg.jpg'),
     users: 5,
     bags: 4,
   },
 ];
 
-// --- 2. Componente ESTÁTICO de Tarjeta de Reserva ---
+// --- 4. Componente de Tarjeta de Reserva  ---
 const ReservationCard = ({ item }: { item: ReservationItem }) => {
   return (
-    // Quitamos el 'Pressable'
-    <Box
-      mr="$4"
-      width={220} // Ancho fijo para el carrusel
-      bg="$background0"
-      borderRadius="$lg"
-      borderWidth={1}
-      borderColor="$coolGray200"
-      overflow="hidden"
-    >
-      <Image
+    <View className="mr-4 w-[220px] bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <RNImage
         source={item.image}
         alt="Car"
-        w="$full"
-        h={120}
+        className="w-full h-32 bg-gray-100" 
         resizeMode="contain"
-        bg="$background100" // Fondo claro para la imagen
       />
-      {/* Barra de iconos */}
-      <HStack
-        p="$2"
-        space="md"
-        justifyContent="center"
-        bg="$background50"
-        borderTopWidth={1}
-        borderColor="$coolGray200"
-      >
-        {item.users && ( // Solo muestra si existe
-          <HStack space="sm" alignItems="center">
+      <View className="p-2 flex-row space-x-4 justify-center bg-gray-50 border-t border-gray-200">
+        {item.users && ( 
+          <View className="flex-row space-x-1 items-center">
             <UserIcon size="sm" color="gray" />
-            <Text size="sm" color="$text600">
-              {item.users}
-            </Text>
-          </HStack>
+            <Text className="text-sm text-gray-500">{item.users}</Text>
+          </View>
         )}
         {item.bags && ( // Solo muestra si existe
-          <HStack space="sm" alignItems="center">
+          <View className="flex-row space-x-1 items-center">
             <BagIcon size="sm" color="gray" />
-            <Text size="sm" color="$text600">
-              {item.bags}
-            </Text>
-          </HStack>
+            <Text className="text-sm text-gray-500">{item.bags}</Text>
+          </View>
         )}
-      </HStack>
-    </Box>
+      </View>
+    </View>
   );
 };
 
-// --- Pantalla Principal "My Reservations" ---
+// --- Pantalla Principal "My Reservations"  ---
 export default function MyReservationsScreen() {
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView className="flex-1 bg-white">
       <ScrollView>
-        <Box p="$5">
-          {/* ----- 1. Título ----- */}
-          <HStack alignItems="center" space="sm" mb="$6" pt="$4">
-            <ReservationIcon size="xl" color="$orange500" />
-            <Heading size="2xl" color="$text900">
+        <View className="p-5">
+          {/* ----- 1. Título  ----- */}
+          <View className="flex-row items-center space-x-2 mb-6 pt-4">
+            <ReservationIcon size="xl" color="#F97A4B" />
+            <Text className="text-2xl font-bold text-gray-900">
               My reservations
-            </Heading>
-          </HStack>
+            </Text>
+          </View>
 
-          {/* ----- 2. Reservas Antiguas ----- */}
-          <VStack space="md" mb="$6">
-            <Heading size="xl" color="$text800">
+          {/* ----- 2. Reservas Antiguas  ----- */}
+          <View className="space-y-4 mb-6">
+            <Text className="text-xl font-bold text-gray-800">
               Old reservations
-            </Heading>
+            </Text>
             <ScrollView
               horizontal={true}
               showsHorizontalScrollIndicator={false}
@@ -151,13 +135,13 @@ export default function MyReservationsScreen() {
                 <ReservationCard key={item.id} item={item} />
               ))}
             </ScrollView>
-          </VStack>
+          </View>
 
-          {/* ----- 3. Reservas Futuras ----- */}
-          <VStack space="md">
-            <Heading size="xl" color="$text800">
+          {/* ----- 3. Reservas Futuras  ----- */}
+          <View className="space-y-4">
+            <Text className="text-xl font-bold text-gray-800">
               Future reservations
-            </Heading>
+            </Text>
             <ScrollView
               horizontal={true}
               showsHorizontalScrollIndicator={false}
@@ -166,17 +150,9 @@ export default function MyReservationsScreen() {
                 <ReservationCard key={item.id} item={item} />
               ))}
             </ScrollView>
-          </VStack>
-        </Box>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-// Agregamos estilos para el SafeAreaView
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-});

@@ -8,15 +8,22 @@ import {
   Image,
   Modal,
   Pressable,
-  StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  useColorScheme, 
 } from "react-native";
+
+import { useThemeColor } from "@/hooks/use-theme-color";
 
 const DrawerLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const router = useRouter();
+
+  const scheme = useColorScheme();
+  const background = useThemeColor({}, "background");
+    const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';// Para el modal
+  const textColor = useThemeColor({}, "text");
 
   const handleGoHome = () => {
     router.push("/drawer/home");
@@ -24,7 +31,7 @@ const DrawerLayout = () => {
 
   return (
     <>
-      {/* 🔔 Modal flotante de notificaciones (de desarrollo) */}
+      {/* 🔔 Modal flotante (Refactorizado con Tailwind y Tema) */}
       <Modal
         transparent
         visible={showNotifications}
@@ -32,35 +39,42 @@ const DrawerLayout = () => {
         onRequestClose={() => setShowNotifications(false)}
       >
         <Pressable
-          style={styles.overlay}
+          className="flex-1 justify-start items-end pt-16 pr-2.5"
+          style={{ backgroundColor: "rgba(0,0,0,0.4)" }} 
           onPress={() => setShowNotifications(false)}
         >
-          <Pressable style={styles.notificationBox}>
-            <Text style={styles.title}>🔔 Notificaciones</Text>
-            <Text style={styles.notification}>
+          <Pressable
+            className="w-72 rounded-xl p-4 shadow-lg"
+            style={{ backgroundColor: cardBackground }}
+          >
+            <Text className="font-bold text-lg text-orange-500 mb-2.5">
+              🔔 Notificaciones
+            </Text>
+            <Text className="text-base mb-6" style={{ color: textColor }}>
               Tu reserva fue confirmada ✅
             </Text>
-            <Text style={styles.notification}>Tienes un nuevo mensaje 💬</Text>
-            <Text style={[styles.notification, { marginBottom: 0 }]}>
+            <Text className="text-base mb-6" style={{ color: textColor }}>
+              Tienes un nuevo mensaje 💬
+            </Text>
+            <Text className="text-base" style={{ color: textColor }}>
               Recibiste una reseña 🌟
             </Text>
           </Pressable>
         </Pressable>
       </Modal>
 
-      {/* --- INICIO DEL MERGE RESUELTO --- */}
       <Drawer
         drawerContent={CustomDrawer}
-        screenOptions={({ navigation }) => ({ // Usamos la versión con ({ navigation })
+        screenOptions={({ navigation }) => ({
           overlayColor: "rgba(0,0,0,0.5)",
           drawerActiveTintColor: "orange",
           headerShadowVisible: false,
           headerStyle: {
             height: 120,
-            backgroundColor: "white",
+            backgroundColor: background, 
           },
           headerTitleAlign: "center",
-          sceneStyle: { backgroundColor: "white" },
+          sceneStyle: { backgroundColor: background }, 
           drawerPosition: "right",
           drawerStyle: { width: 310 },
           headerTitle: "",
@@ -97,7 +111,7 @@ const DrawerLayout = () => {
           headerLeft: () => (
             <TouchableOpacity onPress={handleGoHome} className="ml-4">
               <Image
-                source={require("../../assets/images/Logo-blanco.jpg")}
+                source={require("../../assets/images/Logo-trans.png")}
                 className="w-24 h-24"
                 resizeMode="contain"
               />
@@ -172,7 +186,7 @@ const DrawerLayout = () => {
             ),
           }}
         />
-        
+
         <Drawer.Screen
           name="help/faq"
           options={{
@@ -186,26 +200,26 @@ const DrawerLayout = () => {
 
         {/* --- Pantallas ocultas (Todas juntas) --- */}
         <Drawer.Screen
-            name="carDetail"
-            options={{
-              drawerItemStyle: { display: 'none' },
-              title: "Detalles del Auto",
-            }}
-          />
-          <Drawer.Screen
-            name="payment"
-            options={{
-              drawerItemStyle: { display: 'none' },
-              title: "Pagar Reserva",
-            }}
-          />
-          <Drawer.Screen
-            name="searchResults"
-            options={{
-              drawerItemStyle: { display: 'none' },
-              title: "Autos Disponibles",
-            }}
-          />
+          name="carDetail"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Detalles del Auto",
+          }}
+        />
+        <Drawer.Screen
+          name="payment"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Pagar Reserva",
+          }}
+        />
+        <Drawer.Screen
+          name="searchResults"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Autos Disponibles",
+          }}
+        />
         <Drawer.Screen
           name="autos/editcar"
           options={{
@@ -220,7 +234,6 @@ const DrawerLayout = () => {
             title: "Terminos y condiciones",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="document-text-outline" size={size} color={color} />
-              
             ),
           }}
         />
@@ -235,6 +248,17 @@ const DrawerLayout = () => {
           }}
         />
         <Drawer.Screen
+            name="Settings"
+            options={{
+              drawerLabel: "Settings",
+              title: "",
+              drawerIcon: ({ color, size }) => (
+                <Ionicons name="settings-outline" size={size} color={color} />
+                
+              ),
+            }}
+          />
+        <Drawer.Screen
           name="help/logout"
           options={{
             drawerLabel: "Log out",
@@ -248,38 +272,5 @@ const DrawerLayout = () => {
     </>
   );
 };
-
-// --- Estilos ---
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-start",
-    alignItems: "flex-end",
-    paddingTop: 60,
-    paddingRight: 10,
-  },
-  notificationBox: {
-    backgroundColor: "white",
-    borderRadius: 12,
-    padding: 15,
-    width: 280,
-    shadowColor: "#000",
-    shadowOpacity: 0.25,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 5,
-  },
-  title: {
-    fontWeight: "bold",
-    fontSize: 18,
-    color: "orange",
-    marginBottom: 10,
-  },
-  notification: {
-    fontSize: 15,
-    color: "#333",
-    marginBottom: 25,
-  },
-});
 
 export default DrawerLayout;

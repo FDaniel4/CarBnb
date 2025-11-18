@@ -14,16 +14,18 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.carbnb.app"
     },
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/LogosinletrasB.jpg",
-        "backgroundImage": "./assets/images/LogosinletrasB.jpg",
-        "monochromeImage": "./assets/images/LogosinletrasB.jpg"
+        "foregroundImage": "./assets/images/LogosinletrasB.png",
+        "backgroundImage": "./assets/images/LogosinletrasB.png",
+        "monochromeImage": "./assets/images/LogosinletrasB.png"
       },
       "edgeToEdgeEnabled": true,
+      "package": "com.carbnb.app",
       "predictiveBackGestureEnabled": false
     },
     "web": {
