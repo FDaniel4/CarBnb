@@ -14,9 +14,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { auth, db } from "@/utils/firebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
-import { auth, db } from "@/utils/firebaseConfig";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
 

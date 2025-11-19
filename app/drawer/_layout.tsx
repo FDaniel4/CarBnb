@@ -11,7 +11,7 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useColorScheme, 
+  useColorScheme,
 } from "react-native";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -225,6 +225,13 @@ const DrawerLayout = () => {
           options={{
             drawerItemStyle: { display: "none" },
             title: "Editar mi Auto",
+          }}
+        />
+        <Drawer.Screen
+          name="profile/changePassword"
+          options={{
+            drawerItemStyle: { display: "none" },
+            title: "Cambiar contraseña",
           }}
         />
         <Drawer.Screen

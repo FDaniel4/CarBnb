@@ -113,7 +113,8 @@ const LoginScreen: React.FC = () => {
               value={email}
               keyboardType="email-address"
               autoCapitalize="none"
-              className="flex-1 ml-3 text-base text-black"
+              className="flex-1 ml-3 text-base"
+              style={{ color: textColor }}
               editable={!loading}
             />
           </View>
@@ -130,7 +131,8 @@ const LoginScreen: React.FC = () => {
               onChangeText={setPassword}
               value={password}
               secureTextEntry // Oculta el password
-              className="flex-1 ml-3 text-base text-black"
+              className="flex-1 ml-3 text-base"
+              style={{ color: textColor }}
               editable={!loading}
             />
           </View>

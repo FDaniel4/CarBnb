@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   View,
-  Text,
   Image,
   Alert,
   useColorScheme, 
@@ -12,7 +11,6 @@ import {
   DrawerItem,
 } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router'; 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColor } from '@/hooks/use-theme-color'; 
 
@@ -68,7 +66,7 @@ export default function CustomDrawer(props: any) {
       style={{ backgroundColor: background }} 
     >
       <View
-        className="h-[220px] justify-center items-center mb-2.5"
+        className="h-[220px] justify-center items-center"
         style={{ backgroundColor: background }} 
       >
         <Image
