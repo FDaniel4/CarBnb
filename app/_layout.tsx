@@ -1,14 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import { ThemeProvider } from '@react-navigation/native';
+import { StripeProvider } from '@stripe/stripe-react-native';
 import { Slot, useRouter, useSegments } from 'expo-router';
-import { onAuthStateChanged } from 'firebase/auth';
-import { auth } from "@/utils/firebaseConfig";
 import * as SplashScreen from 'expo-splash-screen';
-import { ThemeProvider } from '@react-navigation/native'; 
-import { useThemeColor } from '@/hooks/use-theme-color'; 
-import { useColorScheme } from '@/hooks/use-color-scheme'; 
-import { StatusBar } from 'react-native'; 
-import "../global.css";
+import React, { useEffect, useState } from 'react';
+import { StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+// --- Imports usando rutas relativas (../) para evitar errores ---
+import { onAuthStateChanged } from 'firebase/auth';
+import "../global.css";
+import { useColorScheme } from '../hooks/use-color-scheme';
+import { useThemeColor } from '../hooks/use-theme-color';
+import { auth } from '../utils/firebaseConfig';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -17,13 +20,14 @@ function AuthLayout() {
   const [authLoaded, setAuthLoaded] = useState(false);
   const segments = useSegments();
   const router = useRouter();
-  const scheme = useColorScheme(); 
-  const background = useThemeColor({}, 'background'); 
-  const textColor = useThemeColor({}, 'text'); 
+  const scheme = useColorScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
 
+  // --- Lógica de Auth ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsUserLoggedIn(!!user); 
+      setIsUserLoggedIn(!!user);
       setAuthLoaded(true);
     });
 
@@ -33,19 +37,26 @@ function AuthLayout() {
   useEffect(() => {
     if (!authLoaded) return;
 
-    const inAuthGroup = segments[0] === 'login';
+    // --- SOLUCIÓN DEL ERROR ---
+    // Convertimos 'segments[0]' a string genérico para que TS no se queje
+    // de que "(drawer)" no coincide con sus tipos autogenerados.
+    const currentSegment = segments[0] as string;
+
+    const inAuthGroup = currentSegment === 'login';
+    const isProtectedRoute = currentSegment === '(drawer)';
 
     if (isUserLoggedIn) {
+      // Usuario Logueado: Si trata de entrar a login, lo mandamos al home
       if (inAuthGroup) {
         router.replace('/drawer/home');
       }
     } else {
+      // Usuario NO Logueado: Si trata de entrar al drawer, lo mandamos al inicio
       if (!inAuthGroup) {
-        // Si está en CUALQUIER otra pantalla que no sea de login,
-        // lo mandamos al login.
         router.replace('/login/WelcomeScreen');
       }
     }
+
     if (authLoaded) {
       SplashScreen.hideAsync();
     }
@@ -68,11 +79,11 @@ function AuthLayout() {
           notification: textColor,
         },
         fonts: {
-      regular: { fontFamily: 'System', fontWeight: '400' },
-      medium: { fontFamily: 'System', fontWeight: '500' },
-      bold: { fontFamily: 'System', fontWeight: '700' },
-      heavy: { fontFamily: 'System', fontWeight: '900' },
-    },
+          regular: { fontFamily: 'System', fontWeight: '400' },
+          medium: { fontFamily: 'System', fontWeight: '500' },
+          bold: { fontFamily: 'System', fontWeight: '700' },
+          heavy: { fontFamily: 'System', fontWeight: '900' },
+        },
       }}
     >
       <StatusBar
@@ -80,14 +91,24 @@ function AuthLayout() {
         backgroundColor={background}
       />
 
+      {/* Renderiza la pantalla actual (Login, Drawer, etc.) */}
       <Slot />
     </ThemeProvider>
   );
 }
 
 export default function RootLayout() {
+  // Clave pública de Stripe (desde .env)
+  const stripeKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
   return (
-      <AuthLayout />
-    );
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StripeProvider
+        publishableKey={stripeKey}
+        merchantIdentifier="merchant.com.carbnb.app"
+      >
+        <AuthLayout />
+      </StripeProvider>
+    </GestureHandlerRootView>
+  );
 }

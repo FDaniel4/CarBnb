@@ -48,4 +48,4 @@ app-example
 /android
 
 # Variables
-.env
+# .env
