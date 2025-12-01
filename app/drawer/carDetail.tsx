@@ -1,52 +1,43 @@
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
-import {
-  Box,
-  Button,
-  ButtonText,
-  Heading,
-  HStack,
-  Icon,
-  Image,
-  Text,
-  VStack,
-} from '@gluestack-ui/themed';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StyleSheet } from 'react-native'; // <-- 1. IMPORTAMOS ScrollView
+import {
+  Image as RNImage,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Iconos Personalizados ---
-const UserIcon = (props: any) => (
-  <Icon as={FontAwesome} name="user" {...props} />
+const UserIcon = (props: { size: number; color: string }) => (
+  <FontAwesome name="user" size={props.size} color={props.color} />
 );
-const CogIcon = (props: any) => (
-  <Icon as={Ionicons} name="cog" {...props} />
+const CogIcon = (props: { size: number; color: string }) => (
+  <Ionicons name="cog" size={props.size} color={props.color} />
 );
 
 // --- Función para obtener la imagen correcta ---
-// Ya que no podemos pasar 'require' como parámetro,
-// usamos el nombre para encontrar la imagen.
 const getImageFromName = (name: string) => {
   if (name === 'Kia Soul') {
-    return require('@/assets/images/Autos/aveo_5door_lrg.jpg');
+    return require('../../assets/images/Autos/aveo_5door_lrg.jpg');
   }
   if (name === 'Volkswagen Vento') {
-    // Corregido: 'Ford Mustang' apuntaba a 'jetta_lrg.jpg', 
-    // pero tu lista original tenía 'Volkswagen Vento' apuntando a 'jetta_lrg.jpg'.
-    // Asumiré que el del nombre 'Ford Mustang' era el correcto.
-    return require('@/assets/images/Autos/jetta_lrg.jpg');
+    // Asumiendo que Vento usa vento_lrg.jpg
+    return require('../../assets/images/Autos/vento_lrg.jpg');
   }
-  if (name === 'Volkswagen Vento') {
-    return require('@/assets/images/Autos/vento_lrg.jpg');
+  if (name === 'Ford Mustang') {
+    // Asumiendo que Mustang usa jetta_lrg.jpg
+    return require('../../assets/images/Autos/jetta_lrg.jpg');
   }
   // Añade más 'if' para otros autos
-  return require('@/assets/images/Autos/kicks_lrg.jpg'); // Imagen por defecto
+  return require('../../assets/images/Autos/kicks_lrg.jpg'); // Imagen por defecto
 };
 
 export default function CarDetailScreen() {
   const router = useRouter();
 
-  // 1. Obtenemos los parámetros que 'home.tsx' nos envió
+  // 1. Obtenemos los parámetros 
   const params = useLocalSearchParams() as {
     name: string;
     style: string;
@@ -57,12 +48,10 @@ export default function CarDetailScreen() {
 
   const imageSource = getImageFromName(params.name);
 
-  // 2. ¡AQUÍ ESTÁ LA CORRECCIÓN!
-  // Navegamos a la nueva pantalla 'payment'
+  // 2. Lógica de navegación
   const handleReserve = () => {
-    // Pasamos los datos del auto a la pantalla de Pagos
     router.push({
-      pathname: '/drawer/payment', // <-- ¡LISTO! Apunta a 'payment'
+      pathname: '/drawer/payment',
       params: {
         carName: params.name,
         price: params.price,
@@ -71,57 +60,40 @@ export default function CarDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* 3. Reemplazamos el VStack por un ScrollView */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* 1. Imagen del Auto */}
-        <Box w="$full" h={250} bg="$background100">
-          <Image
+    <SafeAreaView className="flex-1 bg-white">
+      <ScrollView contentContainerClassName="flex-grow bg-white">
+        <View className="w-full h-64 bg-gray-100">
+          <RNImage
             source={imageSource}
             alt={params.name}
-            style={{ width: '100%', height: '100%' }}
+            className="w-full h-full"
             resizeMode="contain"
           />
-        </Box>
+        </View>
 
-        {/* 2. Detalles del Auto */}
-        {/* 4. Quitamos el flex={1} de este VStack */}
-        <VStack p="$5" space="md">
-          {/* ----- CORRECCIÓN DE COLOR ----- */}
-          <Heading size="2xl" color="$text900">
+        <View className="p-5 space-y-4">
+          <Text className="text-3xl font-bold text-gray-900">
             {params.name}
-          </Heading>
-          <Text size="lg" color="$text900">
-            {params.style}
           </Text>
+          <Text className="text-lg text-gray-900">{params.style}</Text>
 
-          {/* Specs */}
-          <HStack
-            space="xl"
-            alignItems="center"
-            bg="$background50"
-            p="$3"
-            borderRadius="$lg"
-          >
-            <HStack alignItems="center" space="sm">
-              {/* ----- CORRECCIÓN DE COLOR ----- */}
-              <UserIcon size="lg" color="$text900" />
-              <Text fontSize="$md" color="$text900">
+          <View className="flex-row space-x-6 items-center bg-gray-50 p-3 rounded-lg">
+            <View className="flex-row items-center space-x-2">
+              <UserIcon size={24} color="#1f2937" />
+              <Text className="text-base text-gray-900">
                 {params.passengers} Pasajeros
               </Text>
-            </HStack>
-            <HStack alignItems="center" space="sm">
-              {/* ----- CORRECCIÓN DE COLOR ----- */}
-              <CogIcon size="lg" color="$text900" />
-              <Text fontSize="$md" color="$text900">
+            </View>
+            <View className="flex-row items-center space-x-2">
+              <CogIcon size={24} color="#1f2937" />
+              <Text className="text-base text-gray-900">
                 {params.transmission}
               </Text>
-            </HStack>
-          </HStack>
+            </View>
+          </View>
 
           {/* Descripción Falsa */}
-          {/* ----- CORRECCIÓN DE COLOR ----- */}
-          <Text mt="$4" color="$text900">
+          <Text className="mt-4 text-gray-900">
             Disfruta de un viaje cómodo y seguro con nuestro {params.name}.
             Perfecto para explorar la ciudad o hacer un viaje por carretera.
             Equipado con todas las comodidades que necesitas para una
@@ -129,43 +101,20 @@ export default function CarDetailScreen() {
           </Text>
 
           {/* Precio (abajo) */}
-          {/* 5. Quitamos el <Box flex={1} /> y añadimos un margen superior */}
-          <HStack
-            justifyContent="space-between"
-            alignItems="center"
-            mb="$4"
-            mt="$6"
-          >
-            <Heading size="3xl" color="$orange500">
+          <View className="flex-row justify-between items-center mb-4 mt-6">
+            <Text className="text-4xl font-bold text-orange-500">
               ${params.price}
-              {/* ----- CORRECCIÓN DE COLOR ----- */}
-              <Text size="md" color="$text900">
-                /día
-              </Text>
-            </Heading>
-            <Button
-              size="lg"
-              bg="$orange500"
-              borderRadius="$lg"
+              <Text className="text-base font-normal text-gray-900"> /día</Text>
+            </Text>
+            <TouchableOpacity
+              className="bg-orange-500 rounded-lg py-3 px-6"
               onPress={handleReserve}
             >
-              <ButtonText>Reservar</ButtonText>
-            </Button>
-          </HStack>
-        </VStack>
+              <Text className="text-white font-bold text-base">Reservar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  // 6. Añadimos el estilo para el ScrollView
-  scrollContent: {
-    flexGrow: 1, // Permite que el contenido crezca
-    backgroundColor: 'white',
-  },
-});

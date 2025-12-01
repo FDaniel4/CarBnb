@@ -16,7 +16,11 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
-    "nativewind-env.d.ts"
+    "nativewind-env.d.ts",
+    "utils/firebaseConfig.ts"  
+  ],
+  "exclude": [
+    "node_modules"
   ]
 }
 // If your editor has a `$schema` property at the top, remove it or point it to a local schema file.
