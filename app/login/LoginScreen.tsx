@@ -1,14 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
-  Image, // <-- 1. IMPORTAMOS StyleSheet (faltaba)
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  Image,
   StatusBar,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,11 +13,12 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useThemeColor } from "@/hooks/use-theme-color";
-import { auth } from "@/utils/firebaseConfig";
+// Importaciones de lógica interna
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useThemeColor } from "../../hooks/use-theme-color"; // Ajusta la ruta si usas '@/hooks'
+import { auth } from "../../utils/firebaseConfig"; // Ajusta la ruta si usas '@/utils'
 
-// --- 1. Importar Librerías de Expo ---
+// --- Importar Librerías de Expo ---
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
@@ -41,7 +38,7 @@ const LoginScreen: React.FC = () => {
   const scheme = useColorScheme();
   const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F3F3F3';
 
-  // --- 2. Verificar soporte y credenciales al iniciar ---
+  // --- Verificar soporte y credenciales al iniciar ---
   useEffect(() => {
     (async () => {
       // A) Revisar si el hardware soporta biometría
@@ -58,7 +55,7 @@ const LoginScreen: React.FC = () => {
     })();
   }, []);
 
-  // --- 3. Función para Login Biométrico ---
+  // --- Función para Login Biométrico ---
   const handleBiometricLogin = async () => {
     const result = await LocalAuthentication.authenticateAsync({
       promptMessage: 'Inicia sesión con FaceID o Huella',
@@ -73,12 +70,13 @@ const LoginScreen: React.FC = () => {
         const savedPassword = await SecureStore.getItemAsync('secure_password');
 
         if (savedEmail && savedPassword) {
-
-          await SecureStore.setItemAsync('secure_email', savedEmail);
-          await SecureStore.setItemAsync('secure_password', savedPassword);
           // Intentar login en Firebase
           await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
           console.log("Biometric login success");
+          // Guardar de nuevo para refrescar (opcional)
+          await SecureStore.setItemAsync('secure_email', savedEmail);
+          await SecureStore.setItemAsync('secure_password', savedPassword);
+          
           router.replace("/drawer/home");
         } else {
           Alert.alert("Error", "No se encontraron credenciales guardadas.");
@@ -93,12 +91,8 @@ const LoginScreen: React.FC = () => {
   };
 
   const handleLogin = () => {
-<<<<<<< HEAD
-    // ... (lógica de login sin cambios)
-=======
->>>>>>> desarrollo
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      Alert.alert("Error", "Por favor ingresa email y contraseña.");
       return;
     }
     setLoading(true);
@@ -106,7 +100,7 @@ const LoginScreen: React.FC = () => {
       .then(async (userCredential) => {
         console.log("Logged in user:", userCredential.user.email);
         
-        // --- 4. Preguntar si quiere guardar biometría ---
+        // --- Preguntar si quiere guardar biometría ---
         if (isBiometricSupported) {
             Alert.alert(
                 "Habilitar Biometría",
@@ -136,144 +130,40 @@ const LoginScreen: React.FC = () => {
           error.code === "auth/user-not-found" ||
           error.code === "auth/wrong-password"
         ) {
-          Alert.alert("Error", "Invalid email or password. Please try again.");
+          Alert.alert("Error", "Credenciales inválidas. Intenta de nuevo.");
         } else {
           Alert.alert(
             "Error",
-            "An unexpected error occurred. Please try again."
+            "Ocurrió un error inesperado. Intenta de nuevo."
           );
         }
       });
   };
 
   const handleForgotPassword = () => {
-<<<<<<< HEAD
-    router.push('/login/ForgotPasswordScreen');
-=======
     router.push("/login/ForgotPasswordScreen");
->>>>>>> desarrollo
   };
 
   const handleSignUp = () => {
     router.push("/login/CreateAcountScreen");
   };
 
-  // --- 2. AÑADIMOS LA FUNCIÓN DE IR ATRÁS ---
-  const handleGoBack = () => {
-    router.back();
-  };
-
   return (
-<<<<<<< HEAD
-    <SafeAreaView className="flex-1 bg-white">
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
-
-      {/* --- 3. AÑADIMOS EL BOTÓN DE ATRÁS AQUÍ --- */}
-      <TouchableOpacity
-        onPress={handleGoBack}
-        className="absolute top-16 left-5 z-10" // Posicionamiento absoluto
-      >
-        <Ionicons name="arrow-back-outline" size={30} color="#333" />
-      </TouchableOpacity>
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1"
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Contenedor principal para centrar el formulario */}
-          <View className="w-full items-center">
-            {/* ---- SECCIÓN LOGO ---- */}
-            <View className="mt-[10%] mb-8">
-              <Image
-                source={require('../../assets/images/Logo-blanco.jpg')}
-                className="w-36 h-36" // Un poco más pequeño
-                resizeMode="contain"
-              />
-            </View>
-
-            {/* ---- TÍTULO "Sign in" ---- */}
-            <Text className="text-3xl font-bold text-gray-800 mb-8">
-              Sign in
-            </Text>
-
-            {/* ---- SECCIÓN INPUTS ---- */}
-            <View className="w-[85%] space-y-4 mb-8">
-              {/* Input Email */}
-              <View className="flex-row items-center bg-gray-100 p-3 rounded-3xl mb-2">
-                <Ionicons name="mail-outline" size={20} color="#888" />
-                <TextInput
-                  placeholder="Email"
-                  placeholderTextColor="#888"
-                  onChangeText={setEmail}
-                  value={email}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  className="flex-1 ml-3 text-base text-black"
-                />
-              </View>
-
-              {/* Input Password */}
-              <View className="flex-row items-center bg-gray-100 p-3 rounded-3xl mb-2">
-                <Ionicons name="lock-closed-outline" size={20} color="#888" />
-                <TextInput
-                  placeholder="Password"
-                  placeholderTextColor="#888"
-                  onChangeText={setPassword}
-                  value={password}
-                  secureTextEntry // Oculta el password
-                  className="flex-1 ml-3 text-base text-black"
-                />
-              </View>
-            </View>
-
-            {/* ---- BOTÓN SIGN IN ---- */}
-            <TouchableOpacity
-              className="bg-[#F97A4B] py-4 w-[85%] rounded-full mb-6 shadow-md shadow-black/20 items-center"
-              onPress={handleLogin}
-            >
-              <Text className="text-white text-lg font-bold">Sign in</Text>
-            </TouchableOpacity>
-
-            {/* ---- TEXTO FORGOT PASSWORD ---- */}
-            <TouchableOpacity onPress={handleForgotPassword}>
-              <Text className="text-sm text-gray-400">Forgot password?</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* ---- TEXTO SIGN UP (ENLACE A CREAR CUENTA) ---- */}
-          {/* Lo dejamos al final del scroll */}
-          <View className="flex-row justify-center items-center mt-12">
-            <Text className="text-sm text-gray-400">
-              Don't have an account?{' '}
-            </Text>
-            <TouchableOpacity onPress={handleSignUp}>
-              <Text className="text-sm text-[#F97A4B] font-bold">
-                Create acount
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-=======
     <SafeAreaView
       className="flex-1 items-center justify-between pb-4"
       style={{ backgroundColor: background }}
     >
       <StatusBar
-        barStyle={
-          useColorScheme() === "dark" ? "light-content" : "dark-content"
-        }
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         backgroundColor={background}
       />
 
       <View className="w-full items-center">
+        {/* LOGO */}
         <View className="mt-[15%] mb-8">
+          {/* Asegúrate de tener esta imagen o cambia la ruta a la que tenías antes */}
           <Image
-            source={require("@/assets/images/Logo-trans.png")}
+            source={require("../../assets/images/Logo-trans.png")} 
             style={{ width: 160, height: 160 }}
             resizeMode="contain"
           />
@@ -283,7 +173,9 @@ const LoginScreen: React.FC = () => {
           Sign in
         </Text>
 
+        {/* FORMULARIO */}
         <View className="w-[85%] space-y-4 mb-8">
+          {/* Email */}
           <View
             className="flex-row items-center p-3 rounded-3xl mb-2"
             style={{ backgroundColor: inputBackground }}
@@ -302,6 +194,7 @@ const LoginScreen: React.FC = () => {
             />
           </View>
 
+          {/* Password */}
           <View
             className="flex-row items-center p-3 rounded-3xl mb-2"
             style={{ backgroundColor: inputBackground }}
@@ -320,7 +213,7 @@ const LoginScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ---- BOTÓN SIGN IN ---- */}
+        {/* BOTÓN SIGN IN */}
         <TouchableOpacity
           className={`py-4 w-[85%] rounded-full mb-4 shadow-md shadow-black/20 items-center ${
             loading ? "bg-gray-400" : "bg-[#F97A4B]"
@@ -333,7 +226,7 @@ const LoginScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
 
-        {/* ---- BOTÓN BIOMÉTRICO (Solo si está disponible y configurado) ---- */}
+        {/* BOTÓN BIOMÉTRICO (Solo si está disponible y configurado) */}
         {isBiometricSupported && hasSavedCredentials && (
           <TouchableOpacity
             className="flex-row items-center justify-center py-3 w-[85%] rounded-full border border-gray-300 mb-6"
@@ -360,19 +253,8 @@ const LoginScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
       </View>
->>>>>>> desarrollo
     </SafeAreaView>
   );
 };
-
-// 4. (Corregido) El estilo 'styles' que faltaba
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flexGrow: 1, // <--- Permite que el contenido crezca
-    justifyContent: 'space-around', // Centra y distribuye
-    alignItems: 'center',
-    paddingVertical: 20, // Añade padding vertical
-  },
-});
 
 export default LoginScreen;
