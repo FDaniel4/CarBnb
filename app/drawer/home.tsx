@@ -1,4 +1,3 @@
-import { useThemeColor } from '@/hooks/use-theme-color';
 import {
   FontAwesome,
   Ionicons,
@@ -25,14 +24,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Firebase ---
-import { auth, db } from '@/utils/firebaseConfig'; // Importamos auth
+// --- Imports con rutas relativas ---
 import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { useThemeColor } from '../../hooks/use-theme-color';
+import { auth, db } from '../../utils/firebaseConfig';
 
-// --- Tipos ---
+// --- Tipos (Actualizado con 'city') ---
 export type Car = {
   id: string;
   name: string;
+  city: string; // <--- Nuevo campo
   style: string;
   price: string;
   passengers: number;
@@ -70,7 +71,12 @@ const CarCard = ({
           style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
+        {/* Badge de Ciudad */}
+        <View className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded-md">
+            <Text className="text-white text-[10px] font-bold">{car.city}</Text>
+        </View>
       </View>
+
       <View className="p-3 space-y-2">
         <View>
           <Text className="text-base font-bold" numberOfLines={1} style={{ color: textColor }}>
@@ -117,6 +123,7 @@ const CarCard = ({
               image: car.image,
               description: car.description || '',
               ownerId: car.ownerId,
+              // No pasamos city a detail si no es necesario, pero podríamos
             },
           });
         }}
@@ -138,13 +145,13 @@ export default function HomeScreen() {
 
   // --- Estado de Datos ---
   const [recentCars, setRecentCars] = useState<Car[]>([]);
-  const [availableCars, setAvailableCars] = useState<Car[]>([]); // Segundo carrusel
+  const [availableCars, setAvailableCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
 
   // --- Cargar Autos de Firestore y Filtrar ---
   useEffect(() => {
-    // Pedimos más autos (ej. 10) para tener suficiente después de filtrar
-    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'), limit(10));
+    // Traemos una buena cantidad de autos para tener variedad
+    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'), limit(15));
     
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const allCars: Car[] = snapshot.docs.map(doc => ({
@@ -152,14 +159,12 @@ export default function HomeScreen() {
         ...doc.data()
       } as Car));
 
-      // FILTRO: Excluir autos que sean míos (ownerId == mi uid)
+      // FILTRO: Excluir autos que sean míos
       const currentUserId = auth.currentUser?.uid;
       const othersCars = allCars.filter(car => car.ownerId !== currentUserId);
 
-      // Distribuir en los carruseles (por ahora usamos la misma lista filtrada)
-      // En el futuro, 'availableCars' podría venir de una query diferente (ej. status === 'available')
-      setRecentCars(othersCars.slice(0, 5)); 
-      setAvailableCars(othersCars); 
+      setRecentCars(othersCars.slice(0, 5)); // Los 5 más recientes ajenos
+      setAvailableCars(othersCars); // Todos los ajenos disponibles
 
       setLoading(false);
     });
@@ -174,7 +179,6 @@ export default function HomeScreen() {
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
   
-  // Helpers de UI
   const formatDate = (date: Date) => date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   
   const openDatePicker = (type: 'from' | 'to') => {
@@ -227,12 +231,12 @@ export default function HomeScreen() {
              )}
           </View>
 
-           {/* Carrusel 2: Autos Disponibles (Nueva Sección) */}
+           {/* Carrusel 2: Autos Disponibles */}
            <View className="mb-8">
              <View className="flex-row justify-between items-end mb-4">
-                <Text className="text-lg font-bold" style={{ color: textColor }}>Autos Disponibles</Text>
+                <Text className="text-lg font-bold" style={{ color: textColor }}>Todos los Autos</Text>
                 <TouchableOpacity onPress={() => router.push('/drawer/searchResults')}>
-                    <Text className="text-orange-500 text-xs font-bold">Ver todos</Text>
+                    <Text className="text-orange-500 text-xs font-bold">Ver más</Text>
                 </TouchableOpacity>
              </View>
              
@@ -242,7 +246,7 @@ export default function HomeScreen() {
                <Text className="text-gray-400 italic">Pronto habrá más autos.</Text>
              ) : (
                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-                 {/* Invertimos el orden o mostramos más para variar */}
+                 {/* Invertimos el orden o mostramos más para variar la vista */}
                  {[...availableCars].reverse().map(car => (
                    <CarCard key={`avail-${car.id}`} car={car} textColor={textColor} cardBackground={cardBackground} />
                  ))}
@@ -303,7 +307,7 @@ export default function HomeScreen() {
                   pathname: '/drawer/searchResults',
                   params: { 
                     city: selectedCity,
-                    from: fromDate.toISOString(), // Enviamos fecha completa para filtrar
+                    from: fromDate.toISOString(),
                     to: toDate.toISOString()
                   }
                 });
@@ -325,7 +329,7 @@ export default function HomeScreen() {
                 <Ionicons name="close" size={24} color="black" />
               </TouchableOpacity>
             </View>
-            {['Aguascalientes', 'CDMX', 'Guadalajara', 'Monterrey'].map(city => (
+            {['Aguascalientes', 'CDMX', 'Guadalajara', 'Monterrey', 'Cancún', 'Puebla'].map(city => (
               <TouchableOpacity 
                 key={city} 
                 className="p-4 border-b border-gray-50 active:bg-orange-50"
