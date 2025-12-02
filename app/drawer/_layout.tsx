@@ -192,6 +192,7 @@ const DrawerLayout = () => {
           options={{
             drawerLabel: "Help & FAQ",
             title: "Frequently Asked Questions",
+            drawerItemStyle: { display: "none" },
             drawerIcon: ({ color, size }) => (
               <Ionicons name="help-outline" size={size} color={color} />
             ),
@@ -238,6 +239,7 @@ const DrawerLayout = () => {
           name="help/support"
           options={{
             drawerLabel: "Terms & Conditions",
+            drawerItemStyle: { display: "none" },
             title: "Terminos y condiciones",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="document-text-outline" size={size} color={color} />
@@ -248,6 +250,7 @@ const DrawerLayout = () => {
           name="help/soporteReal"
           options={{
             drawerLabel: "Support",
+            drawerItemStyle: { display: "none" },
             title: "TSoporte",
             drawerIcon: ({ color, size }) => (
               <Ionicons name="call-outline" size={size} color={color} />
@@ -255,7 +258,7 @@ const DrawerLayout = () => {
           }}
         />
         <Drawer.Screen
-            name="Settings"
+            name="settings/Settings"
             options={{
               drawerLabel: "Settings",
               title: "",
@@ -265,16 +268,6 @@ const DrawerLayout = () => {
               ),
             }}
           />
-        <Drawer.Screen
-          name="help/logout"
-          options={{
-            drawerLabel: "Log out",
-            title: "logout",
-            drawerIcon: ({ color, size }) => (
-              <Ionicons name="log-out-outline" size={size} color={color} />
-            ),
-          }}
-        />
       </Drawer>
     </>
   );

@@ -1,21 +1,21 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Image,
-  Alert,
-  useColorScheme, 
-} from 'react-native';
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { Ionicons } from '@expo/vector-icons';
 import {
   DrawerContentScrollView,
-  DrawerItemList,
   DrawerItem,
+  DrawerItemList,
 } from '@react-navigation/drawer';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import {
+  Alert,
+  Image,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useThemeColor } from '@/hooks/use-theme-color'; 
 
-import { signOut } from 'firebase/auth';
 import { auth } from '@/utils/firebaseConfig';
+import { signOut } from 'firebase/auth';
 
 const DrawerDivider = () => {
   return <View className="h-px bg-gray-200 dark:bg-gray-700 my-2 mx-4" />;

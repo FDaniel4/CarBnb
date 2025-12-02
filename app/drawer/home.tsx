@@ -7,7 +7,7 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Platform,
   Image as RNImage,
@@ -18,91 +18,42 @@ import {
   TouchableOpacity,
   Modal,
   Pressable,
-  useColorScheme, // 1. Importar hook de React Native
+  ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme as useNativeWindColorScheme } from 'nativewind'; // 2. Importar hook de NativeWind
-import { useThemeColor } from '@/hooks/use-theme-color'; // 3. Importar hook de Tema
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
+import { useThemeColor } from '@/hooks/use-theme-color';
 
-// --- Iconos Personalizados (ahora reciben color dinámico) ---
-const UserIcon = (props: { size: 'sm' | 'lg'; color: string }) => {
-  const sizeMap = { sm: 16, lg: 24 };
-  return (
-    <FontAwesome name="user" size={sizeMap[props.size]} color={props.color} />
-  );
-};
-const AutoIcon = (props: { size: 'sm' | 'lg'; color: string }) => {
-  const sizeMap = { sm: 16, lg: 24 };
-  return (
-    <MaterialCommunityIcons
-      name="cogs"
-      size={sizeMap[props.size]}
-      color={props.color}
-    />
-  );
-};
-const ManualIcon = (props: { size: 'sm' | 'lg'; color: string }) => {
-  const sizeMap = { sm: 16, lg: 24 };
-  return (
-    <MaterialCommunityIcons
-      name="cog-outline"
-      size={sizeMap[props.size]}
-      color={props.color}
-    />
-  );
-};
-const CalendarIcon = (props: { size: 'xl'; color: string }) => {
-  const sizeMap = { xl: 28 };
-  return (
-    <Ionicons
-      name="calendar-outline"
-      size={sizeMap[props.size]}
-      color={props.color}
-    />
-  );
+// --- Firebase ---
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { db } from '@/utils/firebaseConfig';
+
+// --- Tipos ---
+export type Car = {
+  id: string;
+  name: string;
+  style: string;
+  price: string;
+  passengers: number;
+  transmission: string;
+  image: string;
+  description?: string;
+  ownerId: string;
 };
 
-// --- Datos de los Autos (sin cambios) ---
-const featuredCars = [
-  {
-    name: 'Kia Soul',
-    style: '6 Puertas',
-    image: require('@/assets/images/Autos/aveo_5door_lrg.jpg'),
-    price: '899',
-    passengers: 4,
-    transmission: 'Auto',
-    brandLogo:
-      'https://logodownload.org/wp-content/uploads/2017/02/mex-rent-a-car-logo-1.png',
-  },
-  {
-    name: 'Ford Mustang',
-    style: '2 Puertas',
-    image: require('@/assets/images/Autos/jetta_lrg.jpg'),
-    price: '639',
-    passengers: 2,
-    transmission: 'Auto',
-    brandLogo:
-      'https://companieslogo.com/img/orig/CAR-c80c6819.png?t=1659337581',
-  },
-  {
-    name: 'Volkswagen Vento',
-    style: '4 Puertas',
-    image: require('@/assets/images/Autos/vento_lrg.jpg'),
-    price: '499',
-    passengers: 4,
-    transmission: 'Manual',
-    brandLogo:
-      'https://upload.wikimedia.org/wikipedia/commons/3/30/Bob_Finance_logo.png',
-  },
-];
+// --- Iconos ---
+const UserIcon = ({ color }: { color: string }) => <FontAwesome name="user" size={14} color={color} />;
+const AutoIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cogs" size={14} color={color} />;
+const ManualIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cog-outline" size={14} color={color} />;
+const CalendarIcon = ({ color }: { color: string }) => <Ionicons name="calendar-outline" size={24} color={color} />;
 
-// --- Componente de Tarjeta de Auto (con props de tema) ---
 const CarCard = ({
   car,
   textColor,
   cardBackground,
 }: {
-  car: (typeof featuredCars)[0];
+  car: Car;
   textColor: string;
   cardBackground: string;
 }) => {
@@ -110,392 +61,255 @@ const CarCard = ({
 
   return (
     <View
-      className="rounded-lg overflow-hidden w-56 mr-4 border border-gray-100"
-      style={{ backgroundColor: cardBackground }} // Aplicar fondo de tarjeta
+      className="rounded-lg overflow-hidden w-64 mr-4 border border-gray-200 shadow-sm"
+      style={{ backgroundColor: cardBackground }}
     >
-      <View className="w-full h-32 bg-gray-100">
+      <View className="w-full h-40 bg-gray-100 relative">
         <RNImage
-          source={car.image}
+          source={{ uri: car.image }} // Usamos URI para imágenes de red
           style={{ width: '100%', height: '100%' }}
-          resizeMode="contain"
+          resizeMode="cover"
         />
       </View>
-      <View className="p-3 space-y-1">
-        <View className="flex-row justify-between items-center">
-          <View>
-            <Text
-              className="text-sm font-bold"
-              style={{ color: textColor }} // Aplicar color
-            >
-              {car.name}
-            </Text>
-            <Text className="text-xs" style={{ color: textColor }}>
-              {car.style}
-            </Text>
-          </View>
-          <RNImage
-            source={{ uri: car.brandLogo }}
-            alt="Brand Logo"
-            className="w-10 h-5"
-            resizeMode="contain"
-          />
-        </View>
-        <View className="flex-row items-end space-x-1">
-          <Text className="text-xs text-gray-500">Desde</Text>
-          <Text className="text-base font-bold text-orange-500">
-            ${car.price}
+      <View className="p-3 space-y-2">
+        <View>
+          <Text className="text-base font-bold" numberOfLines={1} style={{ color: textColor }}>
+            {car.name}
           </Text>
-          <Text className="text-xs text-gray-500">/día</Text>
+          <Text className="text-xs opacity-70" style={{ color: textColor }}>
+            {car.style}
+          </Text>
+        </View>
+        
+        <View className="flex-row items-end justify-between">
+          <View>
+             <Text className="text-xs text-gray-500">Desde</Text>
+             <Text className="text-lg font-bold text-orange-500">
+               ${car.price}<Text className="text-xs font-normal text-gray-500">/día</Text>
+             </Text>
+          </View>
         </View>
 
-        <View className="flex-row space-x-3 items-center pt-1">
+        <View className="flex-row space-x-4 pt-2 border-t border-gray-100">
           <View className="flex-row items-center space-x-1">
-            <UserIcon size="sm" color={textColor} />
-            <Text className="text-sm" style={{ color: textColor }}>
-              {car.passengers}
-            </Text>
+            <UserIcon color={textColor} />
+            <Text className="text-xs" style={{ color: textColor }}>{car.passengers}</Text>
           </View>
           <View className="flex-row items-center space-x-1">
-            {car.transmission === 'Auto' ? (
-              <AutoIcon size="sm" color={textColor} />
-            ) : (
-              <ManualIcon size="sm" color={textColor} />
-            )}
-            <Text className="text-sm" style={{ color: textColor }}>
-              {car.transmission}
-            </Text>
+            {car.transmission === 'Auto' ? <AutoIcon color={textColor} /> : <ManualIcon color={textColor} />}
+            <Text className="text-xs" style={{ color: textColor }}>{car.transmission}</Text>
           </View>
         </View>
       </View>
+
       <TouchableOpacity
-        className="bg-orange-500 py-3"
+        className="bg-orange-500 py-3 items-center"
         onPress={() => {
-          // Lógica de router (sin cambios)
           router.push({
             pathname: '/drawer/carDetail',
             params: {
+              id: car.id, // Pasamos el ID real
               name: car.name,
               style: car.style,
               price: car.price,
-              passengers: car.passengers,
+              passengers: car.passengers.toString(),
               transmission: car.transmission,
+              image: car.image,
+              description: car.description || '',
+              ownerId: car.ownerId,
             },
           });
         }}
       >
-        <Text className="text-white font-bold text-center">Select</Text>
+        <Text className="text-white font-bold uppercase text-xs">Seleccionar</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
-// --- Pantalla Principal de Home (con lógica de Tema) ---
 export default function HomeScreen() {
   const router = useRouter();
+  const { colorScheme, setColorScheme } = useNativeWindColorScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const scheme = useColorScheme();
+  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
+  const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F9FAFB';
 
-  // --- 4. Hooks de Tema ---
-  const { colorScheme, setColorScheme } = useNativeWindColorScheme(); // Para el Switch
-  const background = useThemeColor({}, 'background'); // Para el fondo
-  const textColor = useThemeColor({}, 'text'); // Para el texto
-  const scheme = useColorScheme(); // Para lógica interna (react-native)
+  // --- Estado de Datos ---
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Definir colores de UI basados en el tema
-  const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F3F3F3'; // Gris claro o oscuro
-  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF'; // Blanco o casi negro
-  const modalBackground = scheme === 'dark' ? '#1C1C1E' : '#FFEDD5'; // Naranja muy claro o casi negro
-  const modalTextColor = scheme === 'dark' ? '#FFFFFF' : '#4B5563'; // Blanco o gris
+  // --- Cargar Autos de Firestore ---
+  useEffect(() => {
+    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'), limit(5));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedCars: Car[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Car));
+      setCars(fetchedCars);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
 
-  const isDarkMode = colorScheme === 'dark';
-  const toggleDarkMode = (isOn: boolean) => {
-    setColorScheme(isOn ? 'dark' : 'light');
-  };
-
-  // ----- Lógica de 'booknow.tsx' (sin cambios) -----
+  // --- Estados de Filtros ---
   const [showModal, setShowModal] = useState(false);
-  const [modalOptions, setModalOptions] = useState<string[]>([]);
-  const [selectedCity, setSelectedCity] = useState('City');
-
+  const [selectedCity, setSelectedCity] = useState('Aguascalientes');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
-  const [fromDateText, setFromDateText] = useState('From');
-  const [toDateText, setToDateText] = useState('To');
-
-  const openModal = (options: string[]) => {
-    setModalOptions(options);
-    setShowModal(true);
-  };
-
-  const openDatePicker = (pickerType: 'from' | 'to') => {
-    setCurrentPicker(pickerType);
+  
+  // Helpers de UI
+  const formatDate = (date: Date) => date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  
+  const openDatePicker = (type: 'from' | 'to') => {
+    setCurrentPicker(type);
     setShowDatePicker(true);
   };
 
-  const onChangeDate = (
-    event: DateTimePickerEvent,
-    selectedDate: Date | undefined
-  ) => {
-    const currentDate =
-      selectedDate || (currentPicker === 'from' ? fromDate : toDate);
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-
-    if (event.type === 'set') {
-      if (currentPicker === 'from') {
-        setFromDate(currentDate);
-        setFromDateText(currentDate.toLocaleDateString());
-      } else {
-        setToDate(currentDate);
-        setToDateText(currentDate.toLocaleDateString());
-      }
-    } else {
-      if (Platform.OS === 'android') {
-        setShowDatePicker(false);
-      }
+  const onChangeDate = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (event.type === 'set' && date) {
+      currentPicker === 'from' ? setFromDate(date) : setToDate(date);
     }
   };
-
-  const onDoneIOS = () => {
-    setShowDatePicker(false);
-    if (currentPicker === 'from') {
-      setFromDateText(fromDate.toLocaleDateString());
-    } else {
-      setToDateText(toDate.toLocaleDateString());
-    }
-  };
-  // ----- FIN DE LÓGICA PORTADA -----
 
   return (
-    // 5. Aplicar fondo dinámico
     <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
-      <ScrollView nestedScrollEnabled={true}>
-        <View className="p-1">
-          {/* ----- 1. Featured ----- */}
-          <View className="flex-row justify-between items-center mb-4 px-4 pt-4">
-            <Text
-              className="text-3xl font-bold"
-              style={{ color: textColor }} // Aplicar color
-            >
-              Featured
-            </Text>
-            <View className="flex-row items-center space-x-2">
-              <Text className="text-xs" style={{ color: textColor }}>
-                DARK MODE
-              </Text>
-              {/* 6. Conectar Switch al hook de NativeWind */}
+      <ScrollView nestedScrollEnabled>
+        <View className="p-5 pb-20">
+          
+          {/* Header */}
+          <View className="flex-row justify-between items-center mb-6">
+            <View>
+              <Text className="text-3xl font-bold" style={{ color: textColor }}>Explorar</Text>
+              <Text className="text-orange-500 font-bold">Encuentra tu auto ideal</Text>
+            </View>
+            <View className="items-end">
+              <Text className="text-[10px] uppercase font-bold text-gray-400 mb-1">Modo {colorScheme}</Text>
               <Switch
-                value={isDarkMode}
-                onValueChange={toggleDarkMode}
-                trackColor={{ false: '#767577', true: '#F97A4B' }}
-                thumbColor={isDarkMode ? '#ffffff' : '#f4f3f4'}
+                value={colorScheme === 'dark'}
+                onValueChange={(val) => setColorScheme(val ? 'dark' : 'light')}
+                trackColor={{ false: '#e5e7eb', true: '#fdba74' }}
+                thumbColor={colorScheme === 'dark' ? '#f97316' : '#f4f4f5'}
               />
             </View>
           </View>
 
-          {/* ----- 2. Carrusel Horizontal ----- */}
-          <ScrollView
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            className="mb-6"
-            contentContainerClassName="px-4"
-          >
-            {featuredCars.map((car) => (
-              <CarCard
-                key={car.name}
-                car={car}
-                textColor={textColor}
-                cardBackground={cardBackground}
-              />
-            ))}
-          </ScrollView>
+          {/* Carrusel */}
+          <View className="mb-8">
+             <Text className="text-lg font-bold mb-4" style={{ color: textColor }}>Recién Agregados</Text>
+             {loading ? (
+               <ActivityIndicator size="large" color="#f97316" />
+             ) : cars.length === 0 ? (
+               <Text className="text-gray-400 italic">No hay autos disponibles aún.</Text>
+             ) : (
+               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+                 {cars.map(car => (
+                   <CarCard key={car.id} car={car} textColor={textColor} cardBackground={cardBackground} />
+                 ))}
+               </ScrollView>
+             )}
+          </View>
 
-          {/* ----- 3. Formulario de Búsqueda Rápida ----- */}
-          <View className="space-y-4 px-4">
-            <TouchableOpacity
-              className="flex-row justify-between items-center py-4 px-4 rounded-lg border"
-              style={{
-                backgroundColor: inputBackground,
-                borderColor: scheme === 'dark' ? '#3A3A3C' : '#E5E7EB', // Colores de borde
-              }}
-              onPress={() =>
-                openModal(['New York', 'Los Angeles', 'Chicago', 'Miami'])
-              }
+          {/* Buscador */}
+          <View className="rounded-2xl p-5 space-y-4 shadow-sm" style={{ backgroundColor: cardBackground }}>
+            <Text className="font-bold text-gray-400 uppercase text-xs">Busca por fecha y lugar</Text>
+            
+            {/* Ciudad */}
+            <TouchableOpacity 
+              onPress={() => setShowModal(true)}
+              className="flex-row items-center p-4 rounded-xl border border-gray-100"
+              style={{ backgroundColor: inputBackground }}
             >
-              <Text
-                className={`text-base ${
-                  selectedCity === 'City' ? 'text-gray-500' : ''
-                }`}
-                style={{
-                  color: selectedCity === 'City' ? '#888' : textColor,
-                }}
-              >
-                {selectedCity}
-              </Text>
-              <Ionicons
-                name="chevron-down"
-                size={20}
-                color={textColor}
-              />
+              <Ionicons name="location-sharp" size={20} color="#f97316" style={{ marginRight: 12 }} />
+              <View className="flex-1">
+                <Text className="text-xs text-gray-400">Ubicación</Text>
+                <Text className="font-bold text-base" style={{ color: textColor }}>{selectedCity}</Text>
+              </View>
+              <Ionicons name="chevron-down" size={20} color="gray" />
             </TouchableOpacity>
 
-            <View
-              className="flex-row space-x-4 items-center p-3 rounded-lg border"
-              style={{
-                backgroundColor: inputBackground,
-                borderColor: scheme === 'dark' ? '#3A3A3C' : '#E5E7EB',
-              }}
-            >
-              <CalendarIcon size="xl" color="#F97A4B" />
-              <View className="flex-1">
-                <TouchableOpacity
-                  onPress={() => openDatePicker('from')}
-                  className="flex-row justify-between w-full"
-                >
-                  <Text
-                    className={`text-lg ${
-                      fromDateText === 'From' ? 'text-gray-500' : ''
-                    }`}
-                    style={{
-                      color: fromDateText === 'From' ? '#888' : textColor,
-                    }}
-                  >
-                    {fromDateText}
-                  </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={textColor}
-                  />
-                </TouchableOpacity>
+            {/* Fechas */}
+            <View className="flex-row space-x-3">
+              <TouchableOpacity 
+                onPress={() => openDatePicker('from')}
+                className="flex-1 flex-row items-center p-3 rounded-xl border border-gray-100"
+                style={{ backgroundColor: inputBackground }}
+              >
+                <Ionicons name="calendar" size={18} color="#f97316" style={{ marginRight: 8 }} />
+                <View>
+                   <Text className="text-xs text-gray-400">Desde</Text>
+                   <Text className="font-bold" style={{ color: textColor }}>{formatDate(fromDate)}</Text>
+                </View>
+              </TouchableOpacity>
 
-                <View className="h-3" />
-
-                <TouchableOpacity
-                  onPress={() => openDatePicker('to')}
-                  className="flex-row justify-between w-full"
-                >
-                  <Text
-                    className={`text-lg ${
-                      toDateText === 'To' ? 'text-gray-500' : ''
-                    }`}
-                    style={{
-                      color: toDateText === 'To' ? '#888' : textColor,
-                    }}
-                  >
-                    {toDateText}
-                  </Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={20}
-                    color={textColor}
-                  />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity 
+                onPress={() => openDatePicker('to')}
+                className="flex-1 flex-row items-center p-3 rounded-xl border border-gray-100"
+                style={{ backgroundColor: inputBackground }}
+              >
+                <Ionicons name="calendar" size={18} color="#f97316" style={{ marginRight: 8 }} />
+                <View>
+                   <Text className="text-xs text-gray-400">Hasta</Text>
+                   <Text className="font-bold" style={{ color: textColor }}>{formatDate(toDate)}</Text>
+                </View>
+              </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-              className="flex-row justify-center items-center py-4 bg-orange-500 rounded-lg mt-2"
+            {/* Botón Buscar */}
+            <TouchableOpacity 
+              className="bg-orange-500 py-4 rounded-xl items-center mt-2 shadow-orange-200 shadow-md"
               onPress={() => {
                 router.push({
                   pathname: '/drawer/searchResults',
-                  params: {
-                    city: selectedCity,
-                    from: fromDateText,
-                    to: toDateText,
-                  },
+                  params: { city: selectedCity }
                 });
               }}
             >
-              <Ionicons name="search" size={20} color="white" className="mr-2" />
-              <Text className="text-white text-base font-bold text-center">
-                Search
-              </Text>
+              <Text className="text-white font-bold text-lg">Buscar Autos</Text>
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      {/* ----- Modal (con Tema) ----- */}
-      <Modal
-        transparent={true}
-        visible={showModal}
-        animationType="fade"
-        onRequestClose={() => setShowModal(false)}
-      >
-        <Pressable
-          className="flex-1 justify-center items-center bg-black/50 p-5"
-          onPress={() => setShowModal(false)}
-        >
-          <Pressable
-            className="w-full rounded-lg"
-            style={{ backgroundColor: modalBackground }} // Fondo de modal
-          >
-            <View
-              className="flex-row justify-between items-center p-4 border-b"
-              style={{
-                borderColor: scheme === 'dark' ? '#3A3A3C' : '#FDE68A',
-              }} // Borde de modal
-            >
-              <Text className="text-lg font-bold text-orange-500">
-                Select City
-              </Text>
+      {/* Modal Ciudades */}
+      <Modal visible={showModal} transparent animationType="fade">
+        <Pressable className="flex-1 bg-black/50 justify-center p-5" onPress={() => setShowModal(false)}>
+          <View className="bg-white rounded-2xl overflow-hidden">
+            <View className="p-4 border-b border-gray-100 flex-row justify-between items-center">
+              <Text className="font-bold text-lg">Selecciona Ciudad</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
-                <Ionicons name="close" size={24} color="#F97A4B" />
+                <Ionicons name="close" size={24} color="black" />
               </TouchableOpacity>
             </View>
-
-            <View className="p-4">
-              {modalOptions.map((option) => (
-                <TouchableOpacity
-                  key={option}
-                  className="py-3"
-                  onPress={() => {
-                    setSelectedCity(option);
-                    setShowModal(false);
-                  }}
-                >
-                  <Text
-                    className="text-base"
-                    style={{ color: modalTextColor }} // Color de texto de modal
-                  >
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Pressable>
+            {['Aguascalientes', 'CDMX', 'Guadalajara', 'Monterrey'].map(city => (
+              <TouchableOpacity 
+                key={city} 
+                className="p-4 border-b border-gray-50 active:bg-orange-50"
+                onPress={() => { setSelectedCity(city); setShowModal(false); }}
+              >
+                <Text className={`text-base ${selectedCity === city ? 'text-orange-500 font-bold' : 'text-gray-700'}`}>
+                  {city}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </Pressable>
       </Modal>
 
-      {/* ----- DatePicker (sin cambios) ----- */}
+      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
-          testID="dateTimePicker"
           value={currentPicker === 'from' ? fromDate : toDate}
           mode="date"
-          is24Hour={true}
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={onChangeDate}
-          // themeVariant={scheme} // Puedes intentar pasar el 'scheme'
+          minimumDate={new Date()}
         />
-      )}
-      {showDatePicker && Platform.OS === 'ios' && (
-        <View
-          className="flex-row justify-around p-2"
-          style={{ backgroundColor: background }}
-        >
-          <TouchableOpacity
-            className="py-2 px-4"
-            onPress={() => setShowDatePicker(false)}
-          >
-            <Text className="text-blue-500 text-base">Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity className="py-2 px-4" onPress={onDoneIOS}>
-            <Text className="text-blue-500 text-base font-bold">Done</Text>
-          </TouchableOpacity>
-        </View>
       )}
     </SafeAreaView>
   );

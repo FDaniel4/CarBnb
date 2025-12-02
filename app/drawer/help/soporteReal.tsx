@@ -1,8 +1,14 @@
+import { useThemeColor } from '@/hooks/use-theme-color';
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { Linking, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const SoporteReal = () => {
+export default function SoporteReal() {
+  const scheme = useColorScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+
   const handleCall = () => {
     Linking.openURL('tel:4499465030');
   };
@@ -12,49 +18,33 @@ const SoporteReal = () => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Soporte</Text>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
+      <View className="flex-1 justify-center items-center p-5">
+        <Text className="text-3xl font-bold mb-10" style={{ color: textColor }}>
+          Soporte
+        </Text>
 
-      <TouchableOpacity style={styles.iconButton} onPress={handleCall}>
-        <Svg width={100} height={100} viewBox="0 0 24 24" stroke="orange" strokeWidth={1.5} fill="none">
-          <Path
-            d="M5 4h4l2 5-3.5 3.5a11 11 0 0 0 5 5l3.5-3.5 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <Path
-            d="M5 4h4l2 5-3.5 3.5a11 11 0 0 0 5 5l3.5-3.5 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 6a2 2 0 0 1 2-2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-        <Text style={styles.label}>Speak with support staff</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          className="items-center my-10"
+          onPress={handleCall}
+        >
+          {/* Usamos Ionicons en lugar de SVG para consistencia y facilidad */}
+          <Ionicons name="call-outline" size={100} color="orange" />
+          <Text className="mt-3 text-lg font-semibold" style={{ color: textColor }}>
+            Speak with support staff
+          </Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={styles.iconButton} onPress={handleEmail}>
-        <Svg width={100} height={100} viewBox="0 0 24 24" stroke="orange" strokeWidth={1.5} fill="none">
-          <Path
-            d="M4 4h16v16H4V4z"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <Path
-            d="M4 4l8 8 8-8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-        <Text style={styles.label}>Send an email to support</Text>
-      </TouchableOpacity>
-    </View>
+        <TouchableOpacity
+          className="items-center my-10"
+          onPress={handleEmail}
+        >
+          <Ionicons name="mail-outline" size={100} color="orange" />
+          <Text className="mt-3 text-lg font-semibold" style={{ color: textColor }}>
+            Send an email to support
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffffff' },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 40, color: '#070707ff' },
-  iconButton: { alignItems: 'center', marginVertical: 60 },
-  label: { marginTop: 12, fontSize: 18, fontWeight: '600', color: '#000000ff' },
-});
-
-export default SoporteReal;
+}
