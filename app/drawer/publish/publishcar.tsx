@@ -1,25 +1,24 @@
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  ScrollView,
-  Image,
-  Alert,
-  ActivityIndicator,
-  Platform,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 
 // --- Firebase y Hooks ---
-import { auth, db, storage } from '@/utils/firebaseConfig';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { auth, db, storage } from '@/utils/firebaseConfig';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { useColorScheme } from 'react-native';
 
 export default function PublishCarScreen() {
@@ -186,24 +185,53 @@ export default function PublishCarScreen() {
           {/* Transmisión (Selector) */}
           <View>
             <Text className="mb-2 font-bold text-gray-500 text-xs uppercase">Transmisión</Text>
-            <View className="flex-row bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-              <TouchableOpacity 
-                className={`flex-1 p-3 rounded-md items-center ${transmission === 'Auto' ? 'bg-white shadow-sm' : ''}`}
-                onPress={() => setTransmission('Auto')}
-              >
-                <Text className={`font-bold ${transmission === 'Auto' ? 'text-orange-500' : 'text-gray-500'}`}>
-                  Automático
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                className={`flex-1 p-3 rounded-md items-center ${transmission === 'Manual' ? 'bg-white shadow-sm' : ''}`}
-                onPress={() => setTransmission('Manual')}
-              >
-                <Text className={`font-bold ${transmission === 'Manual' ? 'text-orange-500' : 'text-gray-500'}`}>
-                  Manual
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {/* Transmisión (Checkboxes) */}
+<View className="mt-4">
+  <Text className="mb-2 font-bold text-gray-500 text-xs uppercase">
+    Tipo de Transmisión
+  </Text>
+
+  <View className="flex-row items-center justify-between">
+    {/* Automático */}
+    <TouchableOpacity
+      className="flex-row items-center space-x-2"
+      onPress={() => setTransmission('Auto')}
+    >
+      <View
+        className={`w-6 h-6 rounded-md border-2 ${
+          transmission === 'Auto' ? 'bg-orange-500 border-orange-500' : 'border-gray-400'
+        }`}
+      />
+      <Text
+        className={`text-base font-semibold ${
+          transmission === 'Auto' ? 'text-orange-500' : 'text-gray-600'
+        }`}
+      >
+        Automático
+      </Text>
+    </TouchableOpacity>
+
+    {/* Manual */}
+    <TouchableOpacity
+      className="flex-row items-center space-x-2"
+      onPress={() => setTransmission('Manual')}
+    >
+      <View
+        className={`w-6 h-6 rounded-md border-2 ${
+          transmission === 'Manual' ? 'bg-orange-500 border-orange-500' : 'border-gray-400'
+        }`}
+      />
+      <Text
+        className={`text-base font-semibold ${
+          transmission === 'Manual' ? 'text-orange-500' : 'text-gray-600'
+        }`}
+      >
+        Manual
+      </Text>
+    </TouchableOpacity>
+  </View>
+</View>
+
           </View>
 
           {/* Precio */}
