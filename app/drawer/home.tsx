@@ -1,3 +1,4 @@
+import { useThemeColor } from '@/hooks/use-theme-color';
 import {
   FontAwesome,
   Ionicons,
@@ -7,27 +8,26 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Modal,
   Platform,
+  Pressable,
   Image as RNImage,
   ScrollView,
   Switch,
   Text,
-  View,
   TouchableOpacity,
-  Modal,
-  Pressable,
-  ActivityIndicator,
   useColorScheme,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
-import { useThemeColor } from '@/hooks/use-theme-color';
 
 // --- Firebase ---
-import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/utils/firebaseConfig';
+import { auth, db } from '@/utils/firebaseConfig'; // Importamos auth
+import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 
 // --- Tipos ---
 export type Car = {
@@ -66,7 +66,7 @@ const CarCard = ({
     >
       <View className="w-full h-40 bg-gray-100 relative">
         <RNImage
-          source={{ uri: car.image }} // Usamos URI para imágenes de red
+          source={{ uri: car.image }}
           style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
@@ -108,7 +108,7 @@ const CarCard = ({
           router.push({
             pathname: '/drawer/carDetail',
             params: {
-              id: car.id, // Pasamos el ID real
+              id: car.id,
               name: car.name,
               style: car.style,
               price: car.price,
@@ -137,18 +137,30 @@ export default function HomeScreen() {
   const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F9FAFB';
 
   // --- Estado de Datos ---
-  const [cars, setCars] = useState<Car[]>([]);
+  const [recentCars, setRecentCars] = useState<Car[]>([]);
+  const [availableCars, setAvailableCars] = useState<Car[]>([]); // Segundo carrusel
   const [loading, setLoading] = useState(true);
 
-  // --- Cargar Autos de Firestore ---
+  // --- Cargar Autos de Firestore y Filtrar ---
   useEffect(() => {
-    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'), limit(5));
+    // Pedimos más autos (ej. 10) para tener suficiente después de filtrar
+    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'), limit(10));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedCars: Car[] = snapshot.docs.map(doc => ({
+      const allCars: Car[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as Car));
-      setCars(fetchedCars);
+
+      // FILTRO: Excluir autos que sean míos (ownerId == mi uid)
+      const currentUserId = auth.currentUser?.uid;
+      const othersCars = allCars.filter(car => car.ownerId !== currentUserId);
+
+      // Distribuir en los carruseles (por ahora usamos la misma lista filtrada)
+      // En el futuro, 'availableCars' podría venir de una query diferente (ej. status === 'available')
+      setRecentCars(othersCars.slice(0, 5)); 
+      setAvailableCars(othersCars); 
+
       setLoading(false);
     });
     return () => unsubscribe();
@@ -199,17 +211,40 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Carrusel */}
+          {/* Carrusel 1: Recién Agregados */}
           <View className="mb-8">
              <Text className="text-lg font-bold mb-4" style={{ color: textColor }}>Recién Agregados</Text>
              {loading ? (
                <ActivityIndicator size="large" color="#f97316" />
-             ) : cars.length === 0 ? (
-               <Text className="text-gray-400 italic">No hay autos disponibles aún.</Text>
+             ) : recentCars.length === 0 ? (
+               <Text className="text-gray-400 italic">No hay autos disponibles de otros usuarios.</Text>
              ) : (
                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-                 {cars.map(car => (
+                 {recentCars.map(car => (
                    <CarCard key={car.id} car={car} textColor={textColor} cardBackground={cardBackground} />
+                 ))}
+               </ScrollView>
+             )}
+          </View>
+
+           {/* Carrusel 2: Autos Disponibles (Nueva Sección) */}
+           <View className="mb-8">
+             <View className="flex-row justify-between items-end mb-4">
+                <Text className="text-lg font-bold" style={{ color: textColor }}>Autos Disponibles</Text>
+                <TouchableOpacity onPress={() => router.push('/drawer/searchResults')}>
+                    <Text className="text-orange-500 text-xs font-bold">Ver todos</Text>
+                </TouchableOpacity>
+             </View>
+             
+             {loading ? (
+               <ActivityIndicator size="small" color="#f97316" />
+             ) : availableCars.length === 0 ? (
+               <Text className="text-gray-400 italic">Pronto habrá más autos.</Text>
+             ) : (
+               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+                 {/* Invertimos el orden o mostramos más para variar */}
+                 {[...availableCars].reverse().map(car => (
+                   <CarCard key={`avail-${car.id}`} car={car} textColor={textColor} cardBackground={cardBackground} />
                  ))}
                </ScrollView>
              )}
@@ -266,7 +301,11 @@ export default function HomeScreen() {
               onPress={() => {
                 router.push({
                   pathname: '/drawer/searchResults',
-                  params: { city: selectedCity }
+                  params: { 
+                    city: selectedCity,
+                    from: fromDate.toISOString(), // Enviamos fecha completa para filtrar
+                    to: toDate.toISOString()
+                  }
                 });
               }}
             >

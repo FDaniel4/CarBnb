@@ -31,7 +31,7 @@ export default function PaymentScreen() {
 
   // --- 2. Preparar la hoja de pago (Payment Sheet) ---
   const initializePaymentSheet = async () => {
-    // ! IMPORTANTE: Como es un proyecto escolar sin backend, 
+    // ! IMPORTANTE: Como es un proyecto sin backend, 
     // esto fallará al intentar procesar el pago real porque necesitamos un 'client_secret'
     // que solo un servidor seguro puede generar.
     // Usamos un string falso para inicializar la UI.
@@ -61,7 +61,7 @@ export default function PaymentScreen() {
         // Si falla (que fallará por falta de servidor), mostramos alerta educativa
         // y simulamos el éxito.
         Alert.alert(
-            "Modo Escolar / Demo",
+            "Demo",
             "En una app real, aquí se abriría la pasarela segura de Stripe. Como no tenemos un servidor backend conectado, simularemos un pago exitoso.",
             [
                 { 
