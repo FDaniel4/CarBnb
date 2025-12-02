@@ -4,16 +4,18 @@ import {
   StyleSheet,
   Switch,
   Text,
+  TouchableOpacity, // <-- Importamos TouchableOpacity
   useColorScheme as useRNScheme,
   View,
 } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router'; // <-- Importamos useRouter
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
+// --- Componente para Interruptores (Switch) ---
 const SettingToggle = ({
   iconName,
   label,
@@ -55,11 +57,44 @@ const SettingToggle = ({
       trackColor={{ false: '#E5E7EB', true: '#F97A4B' }}
       ios_backgroundColor="#E5E7EB"
       thumbColor={value ? '#ffffff' : '#f4f3f4'}
+      disabled={disabled}
     />
   </View>
 );
 
+// --- Componente para Botones de Navegación (Flecha >) ---
+const SettingAction = ({
+  iconName,
+  label,
+  onPress,
+  textColor,
+  borderColor,
+  isLast = false, // Para quitar el borde al último
+}: {
+  iconName: React.ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  onPress: () => void;
+  textColor: string;
+  borderColor: string;
+  isLast?: boolean;
+}) => (
+  <TouchableOpacity
+    onPress={onPress}
+    className="flex-row justify-between items-center py-4"
+    style={{ borderBottomWidth: isLast ? 0 : 1, borderColor }}
+  >
+    <View className="flex-row items-center space-x-4">
+      <Ionicons name={iconName} size={22} color={textColor} />
+      <Text className="text-base" style={{ color: textColor }}>
+        {label}
+      </Text>
+    </View>
+    <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+  </TouchableOpacity>
+);
+
 export default function SettingsScreen() {
+  const router = useRouter(); // <-- Hook de navegación
   const { colorScheme, setColorScheme } = useNativeWindColorScheme();
   const scheme = useRNScheme();
   const background = useThemeColor({}, 'background');
@@ -106,11 +141,12 @@ export default function SettingsScreen() {
           Configuración
         </Text>
 
+        {/* --- SECCIÓN GENERAL --- */}
         <Text className="text-sm font-semibold text-gray-500 uppercase mb-2">
           General
         </Text>
         <View
-          className="rounded-lg p-4"
+          className="rounded-lg p-4 mb-6"
           style={{ backgroundColor: cardBackground }}
         >
           <SettingToggle
@@ -136,9 +172,42 @@ export default function SettingsScreen() {
             onValueChange={() => {}}
             disabled={true}
             textColor={textColor}
-            borderColor={borderColor}
+            borderColor="transparent" // El último del grupo sin borde
           />
         </View>
+
+        {/* --- SECCIÓN AYUDA Y LEGAL --- */}
+        <Text className="text-sm font-semibold text-gray-500 uppercase mb-2">
+          Ayuda y Legal
+        </Text>
+        <View
+          className="rounded-lg p-4"
+          style={{ backgroundColor: cardBackground }}
+        >
+          <SettingAction
+            iconName="help-circle-outline"
+            label="Preguntas Frecuentes"
+            onPress={() => router.push('/drawer/help/faq')}
+            textColor={textColor}
+            borderColor={borderColor}
+          />
+          <SettingAction
+            iconName="document-text-outline"
+            label="Términos y Condiciones"
+            onPress={() => router.push('/drawer/help/support')}
+            textColor={textColor}
+            borderColor={borderColor}
+          />
+          <SettingAction
+            iconName="call-outline"
+            label="Soporte"
+            onPress={() => router.push('/drawer/help/soporteReal')}
+            textColor={textColor}
+            borderColor="transparent" // El último del grupo sin borde
+            isLast={true}
+          />
+        </View>
+
       </View>
 
       <Animated.View

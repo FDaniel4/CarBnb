@@ -5,6 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as NavigationBar from 'expo-navigation-bar';
 
 // --- Imports usando rutas relativas (../) para evitar errores ---
 import { onAuthStateChanged } from 'firebase/auth';
@@ -24,6 +25,12 @@ function AuthLayout() {
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
 
+  // 🚫 Ocultar barra de navegación de Android SIEMPRE
+  useEffect(() => {
+    NavigationBar.setVisibilityAsync("hidden");
+    NavigationBar.setBehaviorAsync("overlay-swipe");
+  }, []);
+
   // --- Lógica de Auth ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -37,34 +44,19 @@ function AuthLayout() {
   useEffect(() => {
     if (!authLoaded) return;
 
-    // --- SOLUCIÓN DEL ERROR ---
-    // Convertimos 'segments[0]' a string genérico para que TS no se queje
-    // de que "(drawer)" no coincide con sus tipos autogenerados.
     const currentSegment = segments[0] as string;
-
     const inAuthGroup = currentSegment === 'login';
-    const isProtectedRoute = currentSegment === '(drawer)';
 
     if (isUserLoggedIn) {
-      // Usuario Logueado: Si trata de entrar a login, lo mandamos al home
-      if (inAuthGroup) {
-        router.replace('/drawer/home');
-      }
+      if (inAuthGroup) router.replace('/drawer/home');
     } else {
-      // Usuario NO Logueado: Si trata de entrar al drawer, lo mandamos al inicio
-      if (!inAuthGroup) {
-        router.replace('/login/WelcomeScreen');
-      }
+      if (!inAuthGroup) router.replace('/login/WelcomeScreen');
     }
 
-    if (authLoaded) {
-      SplashScreen.hideAsync();
-    }
+    SplashScreen.hideAsync();
   }, [authLoaded, isUserLoggedIn, segments, router]);
 
-  if (!authLoaded) {
-    return null;
-  }
+  if (!authLoaded) return null;
 
   return (
     <ThemeProvider
@@ -98,7 +90,6 @@ function AuthLayout() {
 }
 
 export default function RootLayout() {
-  // Clave pública de Stripe (desde .env)
   const stripeKey = process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY || "";
 
   return (

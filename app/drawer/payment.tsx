@@ -9,70 +9,85 @@ import {
   Pressable,
   Image as RNImage,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-
-// --- 1. Importar Hook de Stripe ---
 import { useStripe } from '@stripe/stripe-react-native';
+
+// --- Firebase ---
+import { auth, db } from '@/utils/firebaseConfig';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 export default function PaymentScreen() {
   const router = useRouter();
-  const { initPaymentSheet, presentPaymentSheet } = useStripe(); // Hook de Stripe
+  const { initPaymentSheet, presentPaymentSheet } = useStripe();
   const [loading, setLoading] = useState(false);
-
-  const params = useLocalSearchParams() as {
-    price: string;
-    carName: string;
-  };
-
-  const priceToPay = params.price || '300';
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // --- 2. Preparar la hoja de pago (Payment Sheet) ---
-  const initializePaymentSheet = async () => {
-    // ! IMPORTANTE: Como es un proyecto escolar sin backend, 
-    // esto fallará al intentar procesar el pago real porque necesitamos un 'client_secret'
-    // que solo un servidor seguro puede generar.
-    // Usamos un string falso para inicializar la UI.
-    
-    const { error } = await initPaymentSheet({
-      merchantDisplayName: "CarBnb Inc.",
-      paymentIntentClientSecret: 'pi_mock_secret_para_demo', // Falso, para demo
-      defaultBillingDetails: {
-        name: 'Usuario de Prueba',
-      }
-    });
+  // 1. Recibir parámetros (incluyendo la imagen)
+  const params = useLocalSearchParams() as {
+    carId: string;
+    carName: string;
+    price: string;
+    ownerId: string;
+    image: string; // Recibimos la URL de la imagen
   };
 
+  const priceToPay = params.price || '0';
+
+  // 2. Inicializar Stripe (Modo Demo)
   useEffect(() => {
-    initializePaymentSheet();
+    initPaymentSheet({
+      merchantDisplayName: "CarBnb Inc.",
+      paymentIntentClientSecret: 'pi_mock_secret_demo', // Falso, solo para UI
+      defaultBillingDetails: { name: 'Usuario Demo' }
+    });
   }, []);
 
-  // --- 3. Lógica de Pago ---
+  // 3. Guardar Reserva en Firestore
+  const createReservation = async () => {
+    try {
+      if (!auth.currentUser) return;
+
+      await addDoc(collection(db, 'reservations'), {
+        carId: params.carId,
+        carName: params.carName,
+        carImage: params.image || '', // Guardamos la foto para mostrarla en 'Mis Reservas'
+        renterId: auth.currentUser.uid,
+        ownerId: params.ownerId,
+        pricePaid: priceToPay,
+        status: 'confirmed',
+        createdAt: serverTimestamp(),
+        dates: 'Fechas pendientes' // Aquí podrías pasar las fechas reales si las tuvieras
+      });
+      
+      setShowSuccessModal(true);
+
+    } catch (error) {
+      console.error("Error creando reserva:", error);
+      Alert.alert("Error", "El pago pasó pero falló el registro.");
+    }
+  };
+
+  // 4. Manejar el Pago
   const handlePayment = async () => {
     setLoading(true);
-
-    // A) INTENTO CON STRIPE (Modo Demo)
-    // Intentamos abrir la hoja de pago. 
+    
+    // Intentamos abrir la hoja de pago.
+    // En modo demo (sin backend), esto fallará o no completará el proceso real.
     const { error } = await presentPaymentSheet();
 
     if (error) {
-        // Si falla (que fallará por falta de servidor), mostramos alerta educativa
-        // y simulamos el éxito.
+        // Si falla (esperado en demo), mostramos alerta y procedemos
         Alert.alert(
-            "Modo Escolar / Demo",
-            "En una app real, aquí se abriría la pasarela segura de Stripe. Como no tenemos un servidor backend conectado, simularemos un pago exitoso.",
-            [
-                { 
-                    text: "Entendido", 
-                    onPress: () => setShowSuccessModal(true) // <-- Éxito simulado
-                }
-            ]
+            "Modo Demo / Escolar",
+            "La pasarela de Stripe requiere un servidor backend. Simularemos que el pago fue exitoso.",
+            [{ text: "Continuar", onPress: () => createReservation() }]
         );
     } else {
-      // Si el pago fuera real y exitoso
-      setShowSuccessModal(true);
+      // Si el pago fuera real
+      createReservation();
     }
     setLoading(false);
   };
@@ -84,102 +99,88 @@ export default function PaymentScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-white">
-      <ScrollView>
-        <View className="p-5 space-y-6">
-          
-          {/* Resumen de Compra */}
-          <View className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-4">
-             <Text className="text-gray-500 text-sm uppercase font-bold mb-2">Resumen de Reserva</Text>
-             <View className="flex-row justify-between mb-1">
-                <Text className="text-lg font-bold text-gray-800">{params.carName || 'Auto'}</Text>
-                <Text className="text-lg font-bold text-orange-500">${priceToPay}</Text>
-             </View>
-             <Text className="text-gray-400 text-xs">Total a pagar ahora</Text>
-          </View>
+      <ScrollView contentContainerClassName="p-5">
+        
+        <Text className="text-2xl font-bold mb-6 text-gray-800">Confirmar y Pagar</Text>
+        
+        {/* --- Resumen de la Orden --- */}
+        <View className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6 shadow-sm">
+           <View className="flex-row items-center mb-4">
+              {/* Foto del Auto */}
+              {params.image ? (
+                  <RNImage 
+                    source={{ uri: params.image }} 
+                    className="w-20 h-16 rounded-lg mr-4 bg-gray-200" 
+                    resizeMode="cover" 
+                  />
+              ) : (
+                  <View className="w-20 h-16 rounded-lg mr-4 bg-gray-200 items-center justify-center">
+                      <Ionicons name="car" size={24} color="gray" />
+                  </View>
+              )}
+              
+              <View className="flex-1">
+                  <Text className="text-gray-500 text-xs uppercase font-bold">Vehículo</Text>
+                  <Text className="text-lg font-bold text-gray-800" numberOfLines={1}>
+                      {params.carName || 'Auto seleccionado'}
+                  </Text>
+              </View>
+           </View>
 
-          {/* ----- DETALLES DE PAGO (Ahora manejado por Stripe) ----- */}
-          <View className="space-y-4">
-            <View className="bg-blue-50 p-4 rounded-md border border-blue-100 flex-row items-center">
-              <Ionicons name="lock-closed" size={20} color="#3b82f6" style={{marginRight: 10}} />
-              <Text className="text-blue-700 flex-1 text-sm">
-                Los pagos son procesados de forma segura por Stripe. No almacenamos tus datos bancarios.
-              </Text>
-            </View>
-          </View>
-
-          {/* ----- Botón de Pago ----- */}
-          <View className="space-y-4 mt-4">
-            <TouchableOpacity
-                className={`rounded-lg p-4 ${loading ? 'bg-gray-400' : 'bg-orange-500'}`}
-                onPress={handlePayment}
-                disabled={loading}
-              >
-                <Text className="text-white text-xl font-bold text-center">
-                  {loading ? 'Procesando...' : `Pagar $${priceToPay} con Stripe`}
-                </Text>
-            </TouchableOpacity>
-
-            {/* Otros Métodos (Visuales) */}
-            <View className="flex-row space-x-4 justify-center mt-4">
-              <TouchableOpacity>
-                <RNImage
-                  source={{ uri: 'https://placehold.co/150x50/f40f02/ffffff?text=OXXO&font=raleway' }}
-                  accessibilityLabel="OXXO"
-                  className="w-[100px] h-[40px]"
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <RNImage
-                  source={{ uri: 'https://placehold.co/150x50/0070ba/ffffff?text=PayPal&font=raleway' }}
-                  accessibilityLabel="PayPal"
-                  className="w-[100px] h-[40px]"
-                  resizeMode="contain"
-                />
-              </TouchableOpacity>
-            </View>
-          </View>
+           <View className="h-px bg-gray-200 mb-3" />
+           
+           <View className="flex-row justify-between items-center">
+              <Text className="text-gray-600">Total a pagar</Text>
+              <Text className="text-2xl font-bold text-orange-500">${priceToPay}</Text>
+           </View>
         </View>
+
+        {/* --- Aviso de Seguridad --- */}
+        <View className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex-row items-center mb-8">
+            <Ionicons name="shield-checkmark" size={24} color="#3b82f6" style={{marginRight: 12}} />
+            <Text className="text-blue-700 flex-1 text-sm leading-5">
+            Pagos procesados de forma segura por Stripe. No almacenamos tu información financiera.
+            </Text>
+        </View>
+
+        {/* --- Botón de Pago --- */}
+        <TouchableOpacity
+            className={`bg-black py-4 rounded-xl items-center shadow-lg ${loading ? 'opacity-70' : ''}`}
+            onPress={handlePayment}
+            disabled={loading}
+        >
+            {loading ? (
+                <ActivityIndicator color="white" />
+            ) : (
+                <View className="flex-row items-center">
+                    <Ionicons name="card" size={24} color="white" style={{ marginRight: 10 }} />
+                    <Text className="text-white font-bold text-lg">Pagar Ahora</Text>
+                </View>
+            )}
+        </TouchableOpacity>
+
       </ScrollView>
 
-      {/* Modal de Éxito */}
-      <Modal
-        transparent={true}
-        visible={showSuccessModal}
-        animationType="fade"
-        onRequestClose={handleGoHome}
-      >
-        <Pressable
-          className="flex-1 justify-center items-center bg-black/50 p-5"
-          onPress={handleGoHome}
-        >
-          <Pressable className="bg-white rounded-lg w-full max-w-sm">
-            <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-              <View className="flex-row items-center space-x-2">
-                <Ionicons name="checkmark-circle" size={24} color="#22c55e" />
-                <Text className="text-lg font-bold text-gray-800">
-                  ¡Pago Exitoso!
-                </Text>
+      {/* --- Modal de Éxito --- */}
+      <Modal transparent visible={showSuccessModal} animationType="fade" onRequestClose={handleGoHome}>
+        <View className="flex-1 bg-black/60 justify-center items-center p-6">
+           <View className="bg-white p-8 rounded-3xl w-full items-center shadow-2xl">
+              <View className="bg-green-100 p-4 rounded-full mb-4">
+                  <Ionicons name="checkmark" size={40} color="#22c55e" />
               </View>
-              <TouchableOpacity onPress={handleGoHome}>
-                <Ionicons name="close" size={24} color="#6b7280" />
-              </TouchableOpacity>
-            </View>
-            <View className="p-4 space-y-4">
-              <Text className="text-base text-gray-700">
-                Tu reservación para el {params.carName} ha sido confirmada correctamente.
+              <Text className="text-2xl font-bold text-gray-800 mb-2">¡Reserva Exitosa!</Text>
+              <Text className="text-gray-500 text-center mb-8 text-base">
+                Tu vehículo ha sido reservado correctamente. Puedes ver los detalles en "Mis Reservaciones".
               </Text>
-              <TouchableOpacity
-                className="bg-orange-500 rounded-lg p-3"
-                onPress={handleGoHome}
+              
+              <TouchableOpacity 
+                onPress={handleGoHome} 
+                className="bg-orange-500 py-4 px-10 rounded-full w-full"
               >
-                <Text className="text-white text-center font-bold">
-                  Volver al Inicio
-                </Text>
+                 <Text className="text-white font-bold text-center text-lg">Volver al Inicio</Text>
               </TouchableOpacity>
-            </View>
-          </Pressable>
-        </Pressable>
+           </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );
