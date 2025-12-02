@@ -1,173 +1,208 @@
-import { MaterialIcons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
-import Alert from "../../../components/shared/alert"; // ✅ Alerta compartida
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useColorScheme as useRNScheme,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const EditCarScreen = () => {
-  const router = useRouter();
+// --- Firebase y Hooks (Rutas relativas para mayor seguridad) ---
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useThemeColor } from '../../../hooks/use-theme-color';
+import { db } from '../../../utils/firebaseConfig';
 
-  const [description, setDescription] = useState(
-    "El Tesla Cybertruck es una camioneta eléctrica que destaca por su diseño futurista y su estructura de acero inoxidable. Con tres motores que ofrecen hasta 1,020 hp y una carga útil de 1,500 kg. Cuenta con capacidad para remolcar hasta 6,350 kg. Además, incluye tracción total, suspensión adaptativa y una autonomía de hasta 800 km."
-  );
-
-  const [alertVisible, setAlertVisible] = useState(false);
-
-  const handleSave = () => {
-    // Aquí podrías agregar la lógica real de guardado más adelante
-    setAlertVisible(true);
-  };
-
-  return (
-    <LinearGradient colors={["#FFD6A5", "#FF9F1C"]} style={styles.gradientBackground}>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* 🔙 Botón para volver */}
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <MaterialIcons name="arrow-back" size={26} color="#333" />
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Editar mi auto</Text>
-
-        {/* Tarjeta de edición */}
-        <View style={styles.card}>
-          {/* Encabezado */}
-          <View style={styles.headerRow}>
-            <Text style={styles.carName}>Tesla Cybertruck</Text>
-            <MaterialIcons name="edit" size={20} color="#333" />
-          </View>
-
-          {/* Galería de imágenes */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <Image
-              source={require("../../../assets/images/Autos/kicks_lrg.jpg")}
-              style={styles.carImage}
-            />
-            <Image
-              source={require("../../../assets/images/Autos/trax_lrg.jpg")}
-              style={styles.carImage}
-            />
-            <Image
-              source={require("../../../assets/images/Autos/x_trail_lrg.jpg")}
-              style={styles.carImage}
-            />
-            <Image
-              source={require("../../../assets/images/Autos/vento_lrg.jpg")}
-              style={styles.carImage}
-            />
-          </ScrollView>
-
-          {/* Descripción editable */}
-          <TextInput
-            style={styles.textArea}
-            multiline
-            numberOfLines={6}
-            value={description}
-            onChangeText={setDescription}
-          />
-        </View>
-
-        {/* Botón de guardar */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Guardar cambios</Text>
-        </TouchableOpacity>
-
-        {/* ✅ Alerta informativa */}
-        <Alert
-          visible={alertVisible}
-          message="Los cambios se han guardado correctamente."
-          icon="info-outline"
-          color="#FF9B42"
-          onClose={() => setAlertVisible(false)}
-        />
-      </ScrollView>
-    </LinearGradient>
-  );
+type CarData = {
+  name: string;
+  price: string;
+  description: string;
+  image: string;
+  style: string;
+  passengers: number;
+  transmission: string;
 };
 
-export default EditCarScreen;
+export default function EditCarScreen() {
+  const router = useRouter();
+  const { carId } = useLocalSearchParams() as { carId: string };
 
-const styles = StyleSheet.create({
-  gradientBackground: {
-    flex: 1,
-  },
-  container: {
-    padding: 16,
-    paddingTop: 50,
-  },
-  backButton: {
-    position: "absolute",
-    top: 40,
-    left: 16,
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 6,
-    elevation: 3,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 1 },
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#1A1A1A",
-    textAlign: "center",
-    marginVertical: 20,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  carName: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#333",
-  },
-  carImage: {
-    width: 140,
-    height: 100,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  textArea: {
-    backgroundColor: "#FFF7EE",
-    borderRadius: 10,
-    padding: 10,
-    textAlignVertical: "top",
-    color: "#333",
-    fontSize: 14,
-    marginTop: 10,
-  },
-  saveButton: {
-    backgroundColor: "#FF7A00",
-    borderRadius: 10,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginTop: 25,
-  },
-  saveButtonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
+  // --- Tema ---
+  const scheme = useRNScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const cardBg = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
+  const inputBg = scheme === 'dark' ? '#2C2C2E' : '#F3F3F3';
+  const borderColor = scheme === 'dark' ? '#3A3A3C' : '#E5E7EB';
+
+  // --- Estados ---
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [carData, setCarData] = useState<CarData>({
+    name: '',
+    price: '',
+    description: '',
+    image: '',
+    style: '',
+    passengers: 4,
+    transmission: '',
+  });
+
+  // 1. Cargar datos del auto
+  useEffect(() => {
+    const fetchCar = async () => {
+      if (!carId) return;
+      try {
+        const docRef = doc(db, 'cars', carId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setCarData(docSnap.data() as CarData);
+        } else {
+          Alert.alert('Error', 'No se encontró el auto.');
+          router.back();
+        }
+      } catch (error) {
+        console.error(error);
+        Alert.alert('Error', 'Hubo un problema al cargar los datos.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCar();
+  }, [carId]);
+
+  // 2. Guardar cambios
+  const handleSave = async () => {
+    if (!carData.name || !carData.price) {
+        Alert.alert("Error", "El nombre y el precio no pueden estar vacíos.");
+        return;
+    }
+
+    setSaving(true);
+    try {
+      const docRef = doc(db, 'cars', carId);
+      await updateDoc(docRef, {
+        name: carData.name,
+        price: carData.price,
+        description: carData.description,
+        // Podrías agregar más campos editables aquí si quieres
+      });
+      
+      Alert.alert('¡Guardado!', 'La información de tu auto ha sido actualizada.', [
+          { text: 'OK', onPress: () => router.back() }
+      ]);
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'No se pudieron guardar los cambios.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: background }}>
+        <ActivityIndicator size="large" color="#FF7A00" />
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
+      <ScrollView contentContainerClassName="p-4 pb-10">
+        
+        {/* Header con botón atrás */}
+        <View className="flex-row items-center mb-6">
+            <TouchableOpacity 
+                onPress={() => router.back()} 
+                className="p-2 rounded-full bg-gray-100 dark:bg-gray-800 mr-4"
+            >
+                <Ionicons name="arrow-back" size={24} color={textColor} />
+            </TouchableOpacity>
+            <Text className="text-2xl font-bold" style={{ color: textColor }}>Editar Auto</Text>
+        </View>
+
+        {/* Tarjeta de Edición */}
+        <View 
+            className="rounded-2xl p-4 shadow-sm border"
+            style={{ backgroundColor: cardBg, borderColor }}
+        >
+            {/* Imagen (Solo visualización por ahora) */}
+            <View className="w-full h-48 bg-gray-200 rounded-xl mb-6 overflow-hidden">
+                <Image 
+                    source={{ uri: carData.image }} 
+                    className="w-full h-full"
+                    resizeMode="cover"
+                />
+                 <View className="absolute bottom-2 right-2 bg-black/60 px-3 py-1 rounded-full">
+                    <Text className="text-white text-xs">La foto no se puede cambiar aquí</Text>
+                 </View>
+            </View>
+
+            {/* Nombre */}
+            <View className="mb-4">
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">Nombre del Vehículo</Text>
+                <View className="flex-row items-center rounded-lg px-3" style={{ backgroundColor: inputBg }}>
+                    <TextInput
+                        value={carData.name}
+                        onChangeText={(text) => setCarData({...carData, name: text})}
+                        className="flex-1 py-3 text-base font-bold"
+                        style={{ color: textColor }}
+                    />
+                    <MaterialIcons name="edit" size={18} color="gray" />
+                </View>
+            </View>
+
+            {/* Precio */}
+            <View className="mb-4">
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">Precio por día ($)</Text>
+                <View className="flex-row items-center rounded-lg px-3" style={{ backgroundColor: inputBg }}>
+                    <Text className="text-orange-500 text-lg font-bold mr-1">$</Text>
+                    <TextInput
+                        value={carData.price}
+                        onChangeText={(text) => setCarData({...carData, price: text})}
+                        keyboardType="numeric"
+                        className="flex-1 py-3 text-lg font-bold text-orange-500"
+                    />
+                    <MaterialIcons name="edit" size={18} color="gray" />
+                </View>
+            </View>
+
+             {/* Descripción */}
+             <View className="mb-2">
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">Descripción</Text>
+                <TextInput
+                    value={carData.description}
+                    onChangeText={(text) => setCarData({...carData, description: text})}
+                    multiline
+                    numberOfLines={6}
+                    className="rounded-lg p-3 text-base leading-6"
+                    style={{ backgroundColor: inputBg, color: textColor, textAlignVertical: 'top', height: 120 }}
+                />
+            </View>
+
+        </View>
+
+        {/* Botón Guardar */}
+        <TouchableOpacity 
+            onPress={handleSave}
+            disabled={saving}
+            className={`mt-8 py-4 rounded-xl items-center shadow-md ${saving ? 'bg-gray-400' : 'bg-orange-500'}`}
+        >
+            {saving ? (
+                <ActivityIndicator color="white" />
+            ) : (
+                <Text className="text-white text-lg font-bold">Guardar Cambios</Text>
+            )}
+        </TouchableOpacity>
+
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
