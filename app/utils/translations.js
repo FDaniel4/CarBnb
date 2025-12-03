@@ -205,6 +205,7 @@ export const translations = {
     saveSuccessMsg: "La información de tu auto ha sido actualizada.",
     saveErrorMsg: "No se pudieron guardar los cambios.",
 
+    
     // --- Profile ---
     opps: "¡Opps!",
     loginRequiredMsg: "Necesitas una cuenta para realizar esta acción.",
@@ -281,7 +282,12 @@ export const translations = {
     // --- Notifications ---
     resConfirmed: "Tu reserva fue confirmada ✅",
     newMsg: "Tienes un nuevo mensaje 💬",
-    newReview: "Recibiste una reseña 🌟"
+    newReview: "Recibiste una reseña 🌟",
+
+    datesPending: "Fechas pendientes",
+    paymentErrorTitle: "Error al reservar",
+    paymentErrorMsg: "Hubo un problema al crear tu reserva. Por favor intenta de nuevo.",
+    demoUser: "Usuario Demo"
   },
   
   // ---------------- ENGLISH ----------------
@@ -565,6 +571,11 @@ export const translations = {
     // --- Notifications ---
     resConfirmed: "Your reservation was confirmed ✅",
     newMsg: "You have a new message 💬",
-    newReview: "You received a review 🌟"
+    newReview: "You received a review 🌟",
+
+    datesPending: "Dates pending",
+    paymentErrorTitle: "Reservation Error",
+    paymentErrorMsg: "There was a problem creating your reservation. Please try again.",
+    demoUser: "Demo User"
   }
 };

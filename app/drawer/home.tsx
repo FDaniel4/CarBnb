@@ -51,17 +51,43 @@ const UserIcon = ({ color }: { color: string }) => <FontAwesome name="user" size
 const AutoIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cogs" size={14} color={color} />;
 const ManualIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cog-outline" size={14} color={color} />;
 
+// --- HELPER PARA URLS (Agregado para el Home también) ---
+const getFixedUrl = (urlParam: string | undefined) => {
+    if (!urlParam) return "";
+    let url = urlParam;
+
+    if (url.includes("firebasestorage.googleapis.com") && url.includes("/o/")) {
+        const parts = url.split("/o/");
+        if (parts.length >= 2) {
+            const base = parts[0];
+            const rest = parts[1];
+            const [path, query] = rest.split("?");
+            
+            if (path.includes("/")) {
+                return `${base}/o/${encodeURIComponent(path)}?${query}`;
+            }
+        }
+    }
+    // Fix espacios
+    return url.replace(/ /g, '%20');
+};
+
 const CarCard = ({
   car,
   textColor,
   cardBackground,
+  searchDates // Recibimos las fechas seleccionadas
 }: {
   car: Car;
   textColor: string;
   cardBackground: string;
+  searchDates?: { start: string; end: string }
 }) => {
   const router = useRouter();
   const { t } = useLanguage();
+
+  // Usamos el helper para la imagen
+  const fixedImage = getFixedUrl(car.image);
 
   return (
     <View
@@ -70,7 +96,7 @@ const CarCard = ({
     >
       <View className="w-full h-40 bg-gray-100 relative">
         <RNImage
-          source={{ uri: car.image }}
+          source={{ uri: fixedImage }}
           style={{ width: '100%', height: '100%' }}
           resizeMode="cover"
         />
@@ -125,9 +151,12 @@ const CarCard = ({
               price: car.price,
               passengers: car.passengers.toString(),
               transmission: car.transmission,
-              image: car.image,
+              image: fixedImage, // Pasamos la imagen ya arreglada
               description: car.description || '',
               ownerId: car.ownerId,
+              // PASAMOS LAS FECHAS DEL HOME AL DETALLE
+              startDate: searchDates?.start,
+              endDate: searchDates?.end
             },
           });
         }}
@@ -156,6 +185,26 @@ export default function HomeScreen() {
   const [availableCars, setAvailableCars] = useState<Car[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- Estados de Filtros ---
+  const [showModal, setShowModal] = useState(false);
+  const [selectedCity, setSelectedCity] = useState('Aguascalientes');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
+  
+  // Fechas iniciales: Hoy y Mañana
+  const [fromDate, setFromDate] = useState(new Date());
+  const [toDate, setToDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
+  
+  // Objeto con fechas formateadas para pasar a las tarjetas
+  const currentSearchDates = {
+      start: fromDate.toISOString().split('T')[0],
+      end: toDate.toISOString().split('T')[0]
+  };
+
   // --- Cargar Autos de Firestore y Filtrar ---
   useEffect(() => {
     // Traemos una buena cantidad de autos para tener variedad
@@ -179,14 +228,6 @@ export default function HomeScreen() {
     return () => unsubscribe();
   }, []);
 
-  // --- Estados de Filtros ---
-  const [showModal, setShowModal] = useState(false);
-  const [selectedCity, setSelectedCity] = useState('Aguascalientes');
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
-  const [fromDate, setFromDate] = useState(new Date());
-  const [toDate, setToDate] = useState(new Date());
-  
   const formatDate = (date: Date) => date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
   
   const openDatePicker = (type: 'from' | 'to') => {
@@ -197,7 +238,17 @@ export default function HomeScreen() {
   const onChangeDate = (event: DateTimePickerEvent, date?: Date) => {
     if (Platform.OS === 'android') setShowDatePicker(false);
     if (event.type === 'set' && date) {
-      currentPicker === 'from' ? setFromDate(date) : setToDate(date);
+      if (currentPicker === 'from') {
+          setFromDate(date);
+          // Si la fecha "desde" es después de "hasta", empujar "hasta"
+          if (date > toDate) {
+              const nextDay = new Date(date);
+              nextDay.setDate(date.getDate() + 1);
+              setToDate(nextDay);
+          }
+      } else {
+          setToDate(date);
+      }
     }
   };
 
@@ -233,7 +284,13 @@ export default function HomeScreen() {
               ) : (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
                   {recentCars.map(car => (
-                    <CarCard key={car.id} car={car} textColor={textColor} cardBackground={cardBackground} />
+                    <CarCard 
+                        key={car.id} 
+                        car={car} 
+                        textColor={textColor} 
+                        cardBackground={cardBackground}
+                        searchDates={currentSearchDates} // Pasamos las fechas
+                    />
                   ))}
                 </ScrollView>
               )}
@@ -254,9 +311,14 @@ export default function HomeScreen() {
                <Text className="text-gray-400 italic">{t('noAvailableCars')}</Text>
              ) : (
                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-                 {/* Invertimos el orden o mostramos más para variar la vista */}
                  {[...availableCars].reverse().map(car => (
-                   <CarCard key={`avail-${car.id}`} car={car} textColor={textColor} cardBackground={cardBackground} />
+                   <CarCard 
+                        key={`avail-${car.id}`} 
+                        car={car} 
+                        textColor={textColor} 
+                        cardBackground={cardBackground} 
+                        searchDates={currentSearchDates} // Pasamos las fechas
+                   />
                  ))}
                </ScrollView>
              )}

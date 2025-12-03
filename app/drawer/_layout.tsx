@@ -152,6 +152,7 @@ const DrawerLayout = () => {
           name="booknow"
           options={{
             drawerLabel: t('bookNow'), // <-- Traducido
+            drawerItemStyle: { display: "none" },
             title: t('bookNow'), // <-- Traducido
             drawerIcon: ({ color, size }: { color: string; size: number }) => (
               <Ionicons name="calendar-outline" size={size} color={color} />

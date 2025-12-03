@@ -1,161 +1,286 @@
-import { FontAwesome, Ionicons } from '@expo/vector-icons';
+import { FontAwesome, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Pressable,
+  ActivityIndicator,
   Image as RNImage,
+  Pressable,
   ScrollView,
   Text,
   View,
+  useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+// --- Firebase ---
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { auth, db } from '../../utils/firebaseConfig';
+
+// --- Hooks de Tema ---
+import { useThemeColor } from '../../hooks/use-theme-color';
 
 // 1. IMPORTAR CONTEXTO DE IDIOMA
 import { useLanguage } from '../context/LanguageContext';
 
-const UserIcon = (props: { size: number; color: string }) => (
-  <FontAwesome name="user" size={props.size} color={props.color} />
-);
-const CogIcon = (props: { size: number; color: string }) => (
-  <Ionicons name="cog" size={props.size} color={props.color} />
-);
+// --- Tipos ---
+type Car = {
+  id: string;
+  name: string;
+  city: string; 
+  style: string;
+  price: string;
+  passengers: number;
+  transmission: string;
+  image: string;
+  description?: string;
+  ownerId: string;
+};
 
-// --- Datos de los Autos Disponibles (Simulación) ---
-const availableCars = [
-  {
-    id: 1,
-    name: 'Volkswagen Vento',
-    style: '4 Puertas',
-    image: require('../../assets/images/Autos/vento_lrg.jpg'),
-    price: '4',
-    passengers: 4,
-    transmission: 'Automático',
-  },
-  {
-    id: 2,
-    name: 'Chevrolet Aveo',
-    style: '5 Puertas',
-    image: require('../../assets/images/Autos/aveo_5door_lrg.jpg'),
-    price: '8',
-    passengers: 5,
-    transmission: 'Automático',
-  },
-  {
-    id: 3,
-    name: 'Nissan Kicks',
-    style: 'SUV',
-    image: require('../../assets/images/Autos/kicks_lrg.jpg'),
-    price: '12',
-    passengers: 5,
-    transmission: 'Automático',
-  },
-  {
-    id: 4,
-    name: 'Chevrolet Trax',
-    style: 'SUV',
-    image: require('../../assets/images/Autos/trax_lrg.jpg'),
-    price: '15',
-    passengers: 5,
-    transmission: 'Automático',
-  },
-];
+// --- Iconos ---
+const UserIcon = ({ color }: { color: string }) => <FontAwesome name="user" size={14} color={color} />;
+const AutoIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cogs" size={14} color={color} />;
+const ManualIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cog-outline" size={14} color={color} />;
 
-// --- Componente de la Tarjeta de Auto  ---
-const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
+// --- HELPER PARA URLS ---
+const getFixedUrl = (urlParam: string | undefined) => {
+    if (!urlParam) return "";
+    let url = urlParam;
+
+    if (url.includes("firebasestorage.googleapis.com") && url.includes("/o/")) {
+        const parts = url.split("/o/");
+        if (parts.length >= 2) {
+            const base = parts[0];
+            const rest = parts[1];
+            const [path, query] = rest.split("?");
+            
+            if (path.includes("/")) {
+                return `${base}/o/${encodeURIComponent(path)}?${query}`;
+            }
+        }
+    }
+    return url.replace(/ /g, '%20');
+};
+
+// --- Componente de la Tarjeta de Auto ---
+const CarListItem = ({ 
+    car, 
+    textColor, 
+    cardBg, 
+    borderColor,
+    searchDates 
+}: { 
+    car: Car; 
+    textColor: string; 
+    cardBg: string; 
+    borderColor: string;
+    searchDates?: { start: string; end: string }
+}) => {
   const router = useRouter();
-  
-  // 2. USAR EL HOOK DE IDIOMA
   const { t } = useLanguage();
+  const fixedImage = getFixedUrl(car.image);
 
   return (
     <Pressable
       onPress={() => {
-        // Lógica de navegación 
         router.push({
           pathname: '/drawer/carDetail',
           params: {
-            // Nota: Aquí falta 'id', 'image' (string url) y 'ownerId' que CarDetail espera.
-            // Al usar mock data con require(), pasar la imagen así puede causar problemas en CarDetail
-            // si este espera una URL string. Pero mantengo tu estructura original.
+            id: car.id,
             name: car.name,
             style: car.style,
             price: car.price,
-            passengers: car.passengers,
+            passengers: car.passengers.toString(),
             transmission: car.transmission,
+            image: fixedImage,
+            description: car.description || '',
+            ownerId: car.ownerId,
+            // PASAMOS LAS FECHAS SELECCIONADAS
+            startDate: searchDates?.start,
+            endDate: searchDates?.end
           },
         });
       }}
-      // 5. Reemplazamos 'sx' con 'className' funcional
-      className="flex-row rounded-lg border border-gray-200 overflow-hidden bg-white active:bg-gray-100"
+      className="flex-row rounded-xl border overflow-hidden mb-4 shadow-sm"
+      style={{ backgroundColor: cardBg, borderColor: borderColor }}
     >
-      <View className="flex-row">
-        <View className="w-[140px] h-[100px] bg-gray-100">
-          <RNImage
-            source={car.image}
-            alt={car.name}
-            className="w-full h-full"
-            resizeMode="contain"
-          />
+      <View className="w-[140px] h-[110px] bg-gray-200">
+        <RNImage
+          source={{ uri: fixedImage }}
+          alt={car.name}
+          className="w-full h-full"
+          resizeMode="cover"
+        />
+        {/* Badge Ciudad */}
+        <View className="absolute bottom-1 right-1 bg-black/60 px-1.5 py-0.5 rounded">
+            <Text className="text-white text-[9px] font-bold">{car.city}</Text>
+        </View>
+      </View>
+
+      <View className="p-3 flex-1 justify-between">
+        <View>
+            <Text className="text-base font-bold" numberOfLines={1} style={{ color: textColor }}>
+                {car.name}
+            </Text>
+            <Text className="text-xs opacity-70" style={{ color: textColor }}>
+                {car.style}
+            </Text>
         </View>
 
-        <View className="p-3 flex-1 space-y-1">
-          <Text className="text-base font-bold text-gray-900">
-            {car.name}
-          </Text>
-
-          <View className="flex-row space-x-3 items-center">
-            <View className="flex-row items-center space-x-1">
-              <UserIcon size={14} color="#374151" />
-              <Text className="text-xs text-gray-800">{car.passengers}</Text>
-            </View>
-            <View className="flex-row items-center space-x-1">
-              <CogIcon size={14} color="#374151" />
-              <Text className="text-xs text-gray-800">{car.transmission}</Text>
-            </View>
+        <View className="flex-row space-x-3 items-center mt-1">
+          <View className="flex-row items-center space-x-1">
+            <UserIcon color={textColor} />
+            <Text className="text-xs" style={{ color: textColor }}>{car.passengers}</Text>
           </View>
-
-          <View className="flex-1" />
-
-          <View>
-            <Text className="text-xl font-bold text-orange-500">
-              ${car.price}
-              <Text className="text-xs font-normal text-gray-900"> {t('perDay')}</Text> {/* <-- Traducido */}
+          <View className="flex-row items-center space-x-1">
+            {car.transmission === 'Auto' ? <AutoIcon color={textColor} /> : <ManualIcon color={textColor} />}
+            <Text className="text-xs" style={{ color: textColor }}>
+                {car.transmission === 'Auto' ? t('automatic') : (car.transmission === 'Manual' ? t('manual') : car.transmission)}
             </Text>
           </View>
+        </View>
+
+        <View className="flex-row justify-between items-end mt-2">
+            <View />
+            <Text className="text-xl font-bold text-orange-500">
+                ${car.price}
+                <Text className="text-xs font-normal" style={{ color: textColor }}> {t('perDay')}</Text>
+            </Text>
         </View>
       </View>
     </Pressable>
   );
 };
 
-// --- Pantalla de Resultados de Búsqueda  ---
+// --- Pantalla de Resultados ---
 export default function SearchResultsScreen() {
+  const router = useRouter();
   const params = useLocalSearchParams() as {
     city?: string;
-    from?: string;
-    to?: string;
+    from?: string; // ISO String
+    to?: string;   // ISO String
   };
 
-  // 3. USAR EL HOOK DE IDIOMA EN LA PANTALLA PRINCIPAL
   const { t } = useLanguage();
+  
+  // --- Tema ---
+  const scheme = useColorScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const cardBg = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
+  const borderColor = scheme === 'dark' ? '#3A3A3C' : '#E5E7EB';
+
+  // --- Estados ---
+  const [cars, setCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Formatear fechas para mostrar en el header y pasar al detalle
+  const fromDate = params.from ? new Date(params.from) : null;
+  const toDate = params.to ? new Date(params.to) : null;
+  
+  const searchDates = (fromDate && toDate) ? {
+      start: fromDate.toISOString().split('T')[0],
+      end: toDate.toISOString().split('T')[0]
+  } : undefined;
+
+  const displayDate = (date: Date | null) => {
+      if (!date) return '...';
+      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  };
+
+  // --- Consulta a Firebase ---
+  useEffect(() => {
+    setLoading(true);
+    const carsRef = collection(db, 'cars');
+    // Traemos todos para filtrar en cliente (Firestore no soporta bien búsquedas de texto parcial o insensitivo simple sin configuración extra)
+    // O si prefieres exacto: query(carsRef, where('city', '==', params.city))
+    
+    const unsubscribe = onSnapshot(carsRef, (snapshot) => {
+      const allCars = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Car));
+
+      const currentUserId = auth.currentUser?.uid;
+
+      const filteredCars = allCars.filter(car => {
+        // 1. No mostrar mis propios autos
+        if (car.ownerId === currentUserId) return false;
+        
+        // 2. Filtro por ciudad (si se seleccionó una)
+        if (params.city && params.city !== 'undefined') {
+            // Comparación simple, idealmente normalizar strings (toLowerCase)
+            return car.city === params.city;
+        }
+        
+        return true;
+      });
+
+      setCars(filteredCars);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [params.city]);
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
-      <ScrollView>
-        <View className="p-5 space-y-4">
-          <View>
-            <Text className="text-2xl font-bold text-gray-900">
-              {t('resultsIn')} {params.city || t('yourCity')} {/* <-- Traducido */}
-            </Text>
-            <Text className="text-sm text-gray-900">
-              {t('fromLower')} {params.from || '...'} {t('toLower')} {params.to || '...'} {/* <-- Traducido */}
+    <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
+      {/* Header Personalizado */}
+      <View className="px-5 py-4 border-b" style={{ borderColor: borderColor }}>
+          <View className="flex-row items-center mb-2">
+            <Pressable onPress={() => router.back()} className="mr-3">
+                <Ionicons name="arrow-back" size={24} color={textColor} />
+            </Pressable>
+            <Text className="text-xl font-bold" style={{ color: textColor }}>
+                {t('searchResults')}
             </Text>
           </View>
+          
+          <View className="flex-row items-center space-x-2 opacity-80">
+             <Ionicons name="location-sharp" size={16} color="#F97A4B" />
+             <Text style={{ color: textColor }}>
+                {params.city || t('allCars')}
+             </Text>
+             <Text style={{ color: borderColor }}>|</Text>
+             <Ionicons name="calendar" size={16} color="#F97A4B" />
+             <Text style={{ color: textColor }}>
+                {displayDate(fromDate)} - {displayDate(toDate)}
+             </Text>
+          </View>
+      </View>
 
-          {availableCars.map((car) => (
-            <CarListItem key={car.id} car={car} />
-          ))}
-        </View>
+      <ScrollView contentContainerClassName="p-5">
+        {loading ? (
+           <ActivityIndicator size="large" color="#F97A4B" className="mt-10" />
+        ) : cars.length === 0 ? (
+           <View className="items-center justify-center mt-20">
+              <MaterialCommunityIcons name="car-off" size={64} color="gray" />
+              <Text className="text-gray-500 mt-4 text-center">
+                  No se encontraron autos disponibles en {params.city || 'esta ubicación'}.
+              </Text>
+              <Pressable 
+                onPress={() => router.back()}
+                className="mt-6 bg-orange-500 px-6 py-3 rounded-full"
+              >
+                  <Text className="text-white font-bold">Volver a buscar</Text>
+              </Pressable>
+           </View>
+        ) : (
+           <View>
+              <Text className="mb-4 text-xs font-bold uppercase text-gray-500">
+                  {cars.length} {t('resultsIn')} {params.city || 'Total'}
+              </Text>
+              {cars.map((car) => (
+                <CarListItem 
+                    key={car.id} 
+                    car={car} 
+                    textColor={textColor}
+                    cardBg={cardBg}
+                    borderColor={borderColor}
+                    searchDates={searchDates}
+                />
+              ))}
+           </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
