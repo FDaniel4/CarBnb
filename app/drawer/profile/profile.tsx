@@ -19,7 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { auth, db, storage } from '@/utils/firebaseConfig';
 import { onAuthStateChanged, sendPasswordResetEmail, signOut } from 'firebase/auth';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 
 // Tipo de datos del usuario
@@ -32,54 +32,52 @@ type UserData = {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  
+
   // --- Estados ---
   const [userData, setUserData] = useState<UserData | null>(null);
   const [phone, setPhone] = useState('');
-  const [loading, setLoading] = useState(true); 
-  const [uploadingImage, setUploadingImage] = useState(false); 
-  const [savingPhone, setSavingPhone] = useState(false); 
-  
-  // Estado para saber si es invitado
+  const [loading, setLoading] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [savingPhone, setSavingPhone] = useState(false);
   const [isGuest, setIsGuest] = useState(true);
+  const [myCarsCount, setMyCarsCount] = useState(0);
+  const [myReservationsCount, setMyReservationsCount] = useState(0);
 
   // --- Tema ---
   const scheme = useRNScheme();
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
-  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#F9FAFB'; 
+  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#F9FAFB';
   const borderColor = scheme === 'dark' ? '#3A3A3C' : '#E5E7EB';
 
   const requireLogin = () => {
     Alert.alert(
-      "Opps!",
+      "¡Opps!",
       "Necesitas una cuenta para realizar esta acción.",
       [
         { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Ir a Login", 
-          onPress: () => {
-            signOut(auth); 
-          } 
-        }
+        {
+          text: "Ir a Login",
+          onPress: () => signOut(auth),
+        },
       ]
     );
   };
 
+  // --- Cargar datos del usuario y contadores en tiempo real ---
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Verificamos si es anónimo
         if (user.isAnonymous) {
           setIsGuest(true);
           setLoading(false);
-          // No intentamos cargar datos de Firestore para invitados ya que no se tendria que poder y para que no rompan la app
           return;
         }
 
         setIsGuest(false);
-        // Si es usuario real, cargamos Firestore
         const userDocRef = doc(db, 'users', user.uid);
+
+        // Suscripción a los datos del usuario
         const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as UserData;
@@ -88,18 +86,31 @@ export default function ProfileScreen() {
           }
           setLoading(false);
         });
-        return () => unsubscribeSnapshot();
+
+        // 🔹 Suscripciones en tiempo real a los autos y reservas
+        const carsQuery = query(collection(db, 'cars'), where('ownerId', '==', user.uid));
+        const reservationsQuery = query(collection(db, 'reservations'), where('renterId', '==', user.uid));
+
+        const unsubCars = onSnapshot(carsQuery, (snapshot) => setMyCarsCount(snapshot.size));
+        const unsubReservations = onSnapshot(reservationsQuery, (snapshot) => setMyReservationsCount(snapshot.size));
+
+        return () => {
+          unsubscribeSnapshot();
+          unsubCars();
+          unsubReservations();
+        };
       } else {
-        setLoading(false);
-        // Si no hay usuario, _layout redirige, pero por si acaso:
         setIsGuest(true);
+        setLoading(false);
       }
     });
+
     return () => unsubscribeAuth();
   }, []);
 
+  // --- Cambiar foto de perfil ---
   const handlePickImage = async () => {
-    if (isGuest) return requireLogin(); // <--- Restricción
+    if (isGuest) return requireLogin();
 
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -127,9 +138,7 @@ export default function ProfileScreen() {
         await uploadBytes(storageRef, blob);
 
         const downloadURL = await getDownloadURL(storageRef);
-        await updateDoc(doc(db, 'users', userId), {
-          profilePictureUrl: downloadURL,
-        });
+        await updateDoc(doc(db, 'users', userId), { profilePictureUrl: downloadURL });
 
         Alert.alert('¡Listo!', 'Foto de perfil actualizada.');
       }
@@ -141,8 +150,9 @@ export default function ProfileScreen() {
     }
   };
 
+  // --- Guardar teléfono ---
   const handleSavePhone = async () => {
-    if (isGuest) return requireLogin(); // <--- Restricción
+    if (isGuest) return requireLogin();
     if (!auth.currentUser) return;
 
     setSavingPhone(true);
@@ -156,8 +166,9 @@ export default function ProfileScreen() {
     }
   };
 
+  // --- Cambiar contraseña ---
   const handleChangePassword = () => {
-    if (isGuest) return requireLogin(); // <--- Restricción
+    if (isGuest) return requireLogin();
 
     if (userData?.email) {
       sendPasswordResetEmail(auth, userData.email)
@@ -166,8 +177,9 @@ export default function ProfileScreen() {
     }
   };
 
+  // --- Ir a Mis Autos ---
   const handleMyCars = () => {
-    if (isGuest) return requireLogin(); 
+    if (isGuest) return requireLogin();
     router.push('/drawer/autos/mycars');
   };
 
@@ -182,7 +194,7 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
       <ScrollView contentContainerClassName="flex-grow items-center p-5">
-        
+
         {/* --- FOTO DE PERFIL --- */}
         <View className="mt-8 mb-5 relative">
           <TouchableOpacity onPress={handlePickImage} disabled={uploadingImage}>
@@ -193,7 +205,6 @@ export default function ProfileScreen() {
               className="w-32 h-32 rounded-full border-4 border-gray-100"
               resizeMode="cover"
             />
-            {/* Icono de cámara (Botón flotante) */}
             <View className="absolute bottom-0 right-0 bg-orange-500 p-2 rounded-full border-2 border-white">
               {uploadingImage ? (
                 <ActivityIndicator size="small" color="white" />
@@ -214,29 +225,26 @@ export default function ProfileScreen() {
               <Ionicons name="checkmark-circle" size={20} color="#3b82f6" style={{ marginLeft: 6 }} />
             )}
           </View>
-          
+
           <Text className="text-base text-gray-500 mb-4">
             {isGuest ? 'Regístrate para ver tus datos' : userData?.email}
           </Text>
 
-          <View 
-            className="flex-row items-center bg-gray-50 dark:bg-gray-800 rounded-full px-4 border w-full max-w-xs h-12" 
+          <View
+            className="flex-row items-center bg-gray-50 dark:bg-gray-800 rounded-full px-4 border w-full max-w-xs h-12"
             style={{ borderColor }}
           >
             <Ionicons name="call-outline" size={18} color="gray" className="mr-3" />
-            
             <TextInput
               value={phone}
               onChangeText={setPhone}
               placeholder={isGuest ? "No disponible" : "Agrega tu teléfono"}
               placeholderTextColor="#9ca3af"
               keyboardType="phone-pad"
-              editable={!isGuest} // Deshabilitado si es invitado
-              className="flex-1 text-sm h-full" 
+              editable={!isGuest}
+              className="flex-1 text-sm h-full"
               style={{ color: isGuest ? '#9ca3af' : textColor }}
             />
-            
-            {/* Botón guardar (Solo visible si NO es invitado) */}
             {!isGuest && (
               <TouchableOpacity onPress={handleSavePhone} disabled={savingPhone}>
                 <Text className="text-xs font-bold text-orange-500 ml-2">
@@ -244,28 +252,24 @@ export default function ProfileScreen() {
                 </Text>
               </TouchableOpacity>
             )}
-             {/* Candado (Solo visible si ES invitado) */}
-             {isGuest && (
-               <Ionicons name="lock-closed-outline" size={14} color="#9ca3af" />
-             )}
+            {isGuest && <Ionicons name="lock-closed-outline" size={14} color="#9ca3af" />}
           </View>
         </View>
 
-        {/* --- MÉTRICAS (Diseño limpio) --- */}
+        {/* --- MÉTRICAS DINÁMICAS --- */}
         <View className="flex-row w-full justify-around mb-10">
           <View className="items-center flex-1 p-4 rounded-xl mr-2" style={{ backgroundColor: cardBackground }}>
-            <Text className="text-xl font-bold" style={{ color: textColor }}>0</Text>
+            <Text className="text-xl font-bold" style={{ color: textColor }}>{myCarsCount}</Text>
             <Text className="text-xs text-gray-500 uppercase mt-1">Autos</Text>
           </View>
           <View className="items-center flex-1 p-4 rounded-xl ml-2" style={{ backgroundColor: cardBackground }}>
-            <Text className="text-xl font-bold text-orange-500">0</Text>
+            <Text className="text-xl font-bold text-orange-500">{myReservationsCount}</Text>
             <Text className="text-xs text-gray-500 uppercase mt-1">Reservas</Text>
           </View>
         </View>
 
-        {/* --- BOTONES DE ACCIÓN (Restringidos) --- */}
+        {/* --- BOTONES --- */}
         <View className="w-full space-y-4 ">
-          {/* Botón Naranja (Acción Principal) */}
           <TouchableOpacity
             className={`py-4 rounded-xl items-center shadow-sm mb-1 ${isGuest ? 'bg-gray-400' : 'bg-orange-500'}`}
             onPress={() => router.push('/drawer/profile/changePassword')}
@@ -275,7 +279,6 @@ export default function ProfileScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Botón Secundario (Mis Autos) */}
           <TouchableOpacity
             className="py-4 rounded-xl items-center border"
             style={{ borderColor: isGuest ? 'gray' : 'orange' }}
