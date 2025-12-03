@@ -23,8 +23,6 @@ import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
 // 1. IMPORTAR CONTEXTO DE IDIOMA
-// Nota: Ajusta la ruta '../' o '../../' según dónde esté tu carpeta context.
-// Si está en 'app/context', desde 'app/login' es '../context'
 import { useLanguage } from '../context/LanguageContext';
 
 const LoginScreen: React.FC = () => {
@@ -49,12 +47,22 @@ const LoginScreen: React.FC = () => {
   // --- Verificar soporte y credenciales al iniciar ---
   useEffect(() => {
     (async () => {
-      // A) Revisar si el hardware soporta biometría
+      // DIAGNÓSTICO AL INICIAR
       const compatible = await LocalAuthentication.hasHardwareAsync();
       const enrolled = await LocalAuthentication.isEnrolledAsync();
-      setIsBiometricSupported(compatible && enrolled);
+      const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
+      
+      console.log("--- DIAGNÓSTICO BIOMETRÍA ---");
+      console.log("Hardware compatible:", compatible);
+      console.log("Huella/Cara configurada:", enrolled);
+      console.log("Tipos soportados (1=Huella, 2=Cara):", types);
 
-      // B) Revisar si ya guardamos credenciales antes
+      // Si todo está bien, habilitamos el botón
+      if (compatible && enrolled) {
+        setIsBiometricSupported(true);
+      }
+
+      // Revisar si hay credenciales
       const savedEmail = await SecureStore.getItemAsync('secure_email');
       const savedPassword = await SecureStore.getItemAsync('secure_password');
       if (savedEmail && savedPassword) {
@@ -63,38 +71,55 @@ const LoginScreen: React.FC = () => {
     })();
   }, []);
 
-  // --- Función para Login Biométrico ---
+  // --- Función para Login Biométrico (MODIFICADA PARA PRUEBAS) ---
   const handleBiometricLogin = async () => {
-    const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: t('biometricPrompt'),
-      fallbackLabel: t('usePassword'),
-    });
-
-    if (result.success) {
-      setLoading(true);
-      try {
-        // Recuperar credenciales del baúl seguro
-        const savedEmail = await SecureStore.getItemAsync('secure_email');
-        const savedPassword = await SecureStore.getItemAsync('secure_password');
-
-        if (savedEmail && savedPassword) {
-          // Intentar login en Firebase
-          await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
-          console.log("Biometric login success");
-          // Guardar de nuevo para refrescar (opcional)
-          await SecureStore.setItemAsync('secure_email', savedEmail);
-          await SecureStore.setItemAsync('secure_password', savedPassword);
-          
-          router.replace("/drawer/home");
-        } else {
-          Alert.alert(t('error'), t('biometricNotFound'));
+    try {
+        // 1. Verificación manual antes de llamar a authenticate
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        if (!isEnrolled) {
+            Alert.alert("Error de Configuración", "No tienes FaceID/TouchID configurado en los ajustes de tu iPhone.");
+            return;
         }
-      } catch (error: any) {
-        console.log("Biometric Login Error:", error);
-        Alert.alert(t('error'), t('biometricAuthFailed'));
-      } finally {
+
+        // 2. Intentar autenticación FORZANDO BIOMETRÍA (sin PIN)
+        const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: t('biometricPrompt'),
+            cancelLabel: t('cancel'), // Obligatorio en Android, buena práctica en iOS
+            disableDeviceFallback: true, // <--- ESTO EVITA QUE PIDA EL CÓDIGO
+            fallbackLabel: "", // Ocultar botón de contraseña
+        });
+
+        // 3. Manejar el resultado
+        if (result.success) {
+            setLoading(true);
+            // Recuperar credenciales del baúl seguro
+            const savedEmail = await SecureStore.getItemAsync('secure_email');
+            const savedPassword = await SecureStore.getItemAsync('secure_password');
+
+            if (savedEmail && savedPassword) {
+                // Intentar login en Firebase
+                await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
+                console.log("Biometric login success");
+                
+                // Refrescar credenciales
+                await SecureStore.setItemAsync('secure_email', savedEmail);
+                await SecureStore.setItemAsync('secure_password', savedPassword);
+                
+                router.replace("/drawer/home");
+            } else {
+                Alert.alert(t('error'), t('biometricNotFound'));
+                setLoading(false);
+            }
+        } else {
+            // SI FALLA, MOSTRAMOS POR QUÉ
+            console.log("Fallo Biometría:", result);
+            Alert.alert("Autenticación Fallida", `Razón: ${result.error}`);
+            setLoading(false);
+        }
+    } catch (error: any) {
+        console.log("Error Técnico Biometría:", error);
+        Alert.alert("Error Técnico", error.message || "Ocurrió un error desconocido");
         setLoading(false);
-      }
     }
   };
 
@@ -234,7 +259,8 @@ const LoginScreen: React.FC = () => {
         </TouchableOpacity>
 
         {/* BOTÓN BIOMÉTRICO (Solo si está disponible y configurado) */}
-        {isBiometricSupported && hasSavedCredentials && (
+        {/* Nota: Para pruebas, quitamos la condición && hasSavedCredentials si quieres probar el botón aunque no haya login previo */}
+        {isBiometricSupported && (
           <TouchableOpacity
             className="flex-row items-center justify-center py-3 w-[85%] rounded-full border border-gray-300 mb-6"
             onPress={handleBiometricLogin}
