@@ -29,36 +29,45 @@ function AuthLayout() {
   const textColor = useThemeColor({}, 'text');
 
   useEffect(() => {
+    // Configuración opcional de la barra de navegación de Android
     NavigationBar.setVisibilityAsync("hidden");
     NavigationBar.setBehaviorAsync("overlay-swipe");
   }, []);
 
-  // --- Lógica de Auth ---
+  // --- LÓGICA DE SESIÓN PERSISTENTE ---
+  // Esto es lo que mantiene la sesión viva al cerrar y abrir la app
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsUserLoggedIn(!!user);
+      setIsUserLoggedIn(!!user); // Si user existe, true. Si es null, false.
       setAuthLoaded(true);
     });
 
     return () => unsubscribe();
   }, []);
 
+  // --- LÓGICA DE REDIRECCIÓN AUTOMÁTICA ---
   useEffect(() => {
     if (!authLoaded) return;
 
     const currentSegment = segments[0] as string;
-    const inAuthGroup = currentSegment === 'login';
+    const inAuthGroup = currentSegment === 'login'; // Asumiendo que tus pantallas de auth están en la carpeta (login) o login/
 
     if (isUserLoggedIn) {
-      if (inAuthGroup) router.replace('/drawer/home');
+      // Si está logueado y trata de entrar a login, lo mandamos al Home
+      if (inAuthGroup) {
+        router.replace('/drawer/home');
+      }
     } else {
-      if (!inAuthGroup) router.replace('/login/WelcomeScreen');
+      // Si NO está logueado y trata de entrar a cualquier lado que no sea login, lo mandamos a Welcome
+      if (!inAuthGroup) {
+        router.replace('/login/WelcomeScreen');
+      }
     }
 
     SplashScreen.hideAsync();
   }, [authLoaded, isUserLoggedIn, segments, router]);
 
-  if (!authLoaded) return null;
+  if (!authLoaded) return null; // O un Spinner de carga global
 
   return (
     <ThemeProvider
@@ -101,6 +110,7 @@ export default function RootLayout() {
         merchantIdentifier="merchant.com.carbnb.app"
       >
         {/* 2. ENVOLVER LA APLICACIÓN CON EL CONTEXTO DE IDIOMA AQUI */}
+        {/* Al envolver AuthLayout, el idioma estará disponible en toda la app */}
         <LanguageProvider>
             <AuthLayout />
         </LanguageProvider>

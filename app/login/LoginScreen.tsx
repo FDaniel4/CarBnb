@@ -35,10 +35,10 @@ const LoginScreen: React.FC = () => {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   
-  // Estado para saber si mostramos el botón biométrico
+  // Estado para saber si mostramos el botón biométrico y qué tipo es
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
-  const [hasSavedCredentials, setHasSavedCredentials] = useState(false);
-
+  const [biometricType, setBiometricType] = useState<LocalAuthentication.AuthenticationType | null>(null);
+  
   const background = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
   const scheme = useColorScheme();
@@ -52,56 +52,59 @@ const LoginScreen: React.FC = () => {
       const enrolled = await LocalAuthentication.isEnrolledAsync();
       const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
       
-      console.log("--- DIAGNÓSTICO BIOMETRÍA ---");
-      console.log("Hardware compatible:", compatible);
-      console.log("Huella/Cara configurada:", enrolled);
-      console.log("Tipos soportados (1=Huella, 2=Cara):", types);
-
-      // Si todo está bien, habilitamos el botón
+      // Si todo está bien, habilitamos el botón y detectamos el tipo
       if (compatible && enrolled) {
         setIsBiometricSupported(true);
+        
+        // Priorizar Reconocimiento Facial (Tipo 2) sobre Huella (Tipo 1)
+        if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
+            setBiometricType(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION);
+        } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+            setBiometricType(LocalAuthentication.AuthenticationType.FINGERPRINT);
+        }
       }
 
-      // Revisar si hay credenciales
+      // Revisar si hay credenciales guardadas
       const savedEmail = await SecureStore.getItemAsync('secure_email');
       const savedPassword = await SecureStore.getItemAsync('secure_password');
-      if (savedEmail && savedPassword) {
-        setHasSavedCredentials(true);
-      }
+      // No seteamos el estado visual aquí para no auto-loguear sin acción, 
+      // pero podríamos usarlo para mostrar un indicador visual si quisiéramos.
     })();
   }, []);
 
-  // --- Función para Login Biométrico (MODIFICADA PARA PRUEBAS) ---
+  // --- Función para Login Biométrico ---
   const handleBiometricLogin = async () => {
     try {
-        // 1. Verificación manual antes de llamar a authenticate
         const isEnrolled = await LocalAuthentication.isEnrolledAsync();
         if (!isEnrolled) {
-            Alert.alert("Error de Configuración", "No tienes FaceID/TouchID configurado en los ajustes de tu iPhone.");
+            Alert.alert("Atención", "No tienes biometría configurada en este dispositivo.");
             return;
         }
 
-        // 2. Intentar autenticación FORZANDO BIOMETRÍA (sin PIN)
+        // Determinar el mensaje según el tipo detectado
+        const authMessage = biometricType === LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION 
+            ? "Escanea tu rostro para ingresar" 
+            : t('biometricPrompt');
+
+        // Intentar autenticación
         const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: t('biometricPrompt'),
-            cancelLabel: t('cancel'), // Obligatorio en Android, buena práctica en iOS
-            disableDeviceFallback: true, // <--- ESTO EVITA QUE PIDA EL CÓDIGO
-            fallbackLabel: "", // Ocultar botón de contraseña
+            promptMessage: authMessage,
+            cancelLabel: t('cancel'),
+            disableDeviceFallback: true, // Evita pedir PIN si falla la biometría
+            fallbackLabel: "", 
         });
 
-        // 3. Manejar el resultado
         if (result.success) {
             setLoading(true);
-            // Recuperar credenciales del baúl seguro
+            // Recuperar credenciales
             const savedEmail = await SecureStore.getItemAsync('secure_email');
             const savedPassword = await SecureStore.getItemAsync('secure_password');
 
             if (savedEmail && savedPassword) {
-                // Intentar login en Firebase
+                // Login en Firebase
                 await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
-                console.log("Biometric login success");
                 
-                // Refrescar credenciales
+                // Refrescar credenciales (buena práctica)
                 await SecureStore.setItemAsync('secure_email', savedEmail);
                 await SecureStore.setItemAsync('secure_password', savedPassword);
                 
@@ -111,14 +114,15 @@ const LoginScreen: React.FC = () => {
                 setLoading(false);
             }
         } else {
-            // SI FALLA, MOSTRAMOS POR QUÉ
-            console.log("Fallo Biometría:", result);
-            Alert.alert("Autenticación Fallida", `Razón: ${result.error}`);
+            // Si el usuario cancela o falla
+            if (result.error !== 'user_cancel') {
+                console.log("Fallo Biometría:", result);
+            }
             setLoading(false);
         }
     } catch (error: any) {
         console.log("Error Técnico Biometría:", error);
-        Alert.alert("Error Técnico", error.message || "Ocurrió un error desconocido");
+        Alert.alert("Error", error.message || "Ocurrió un error inesperado");
         setLoading(false);
     }
   };
@@ -131,9 +135,8 @@ const LoginScreen: React.FC = () => {
     setLoading(true);
     signInWithEmailAndPassword(auth, email, password)
       .then(async (userCredential) => {
-        console.log("Logged in user:", userCredential.user.email);
         
-        // --- Preguntar si quiere guardar biometría ---
+        // --- Preguntar si quiere guardar biometría al loguearse con éxito ---
         if (isBiometricSupported) {
             Alert.alert(
                 t('enableBiometricsTitle'),
@@ -156,8 +159,6 @@ const LoginScreen: React.FC = () => {
       })
       .catch((error) => {
         setLoading(false);
-        console.log("Login Error:", error.code);
-
         if (
           error.code === "auth/invalid-credential" ||
           error.code === "auth/user-not-found" ||
@@ -165,10 +166,7 @@ const LoginScreen: React.FC = () => {
         ) {
           Alert.alert(t('error'), t('invalidCredentials'));
         } else {
-          Alert.alert(
-            t('error'),
-            t('unexpectedError')
-          );
+          Alert.alert(t('error'), t('unexpectedError'));
         }
       });
   };
@@ -258,16 +256,22 @@ const LoginScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
 
-        {/* BOTÓN BIOMÉTRICO (Solo si está disponible y configurado) */}
-        {/* Nota: Para pruebas, quitamos la condición && hasSavedCredentials si quieres probar el botón aunque no haya login previo */}
+        {/* BOTÓN BIOMÉTRICO (Dinámico: Rostro o Huella) */}
         {isBiometricSupported && (
           <TouchableOpacity
             className="flex-row items-center justify-center py-3 w-[85%] rounded-full border border-gray-300 mb-6"
             onPress={handleBiometricLogin}
             disabled={loading}
           >
-             <Ionicons name="finger-print" size={24} color={textColor} style={{ marginRight: 10 }} />
+             {/* Icono cambia según el tipo de biometría detectada */}
+             <Ionicons 
+                name={biometricType === LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION ? "scan-outline" : "finger-print"} 
+                size={24} 
+                color={textColor} 
+                style={{ marginRight: 10 }} 
+             />
              <Text className="text-base font-semibold" style={{ color: textColor }}>
+               {/* Texto dinámico opcional, o el genérico 'Ingresar con Biometría' */}
                {t('biometricLogin')}
              </Text>
           </TouchableOpacity>
