@@ -1,23 +1,25 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useState, useEffect } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  TouchableOpacity,
-  Modal,
-  Pressable,
-  Image as RNImage,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useStripe } from '@stripe/stripe-react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Image as RNImage,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Firebase ---
-import { auth, db } from '@/utils/firebaseConfig';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../../utils/firebaseConfig';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
 
 export default function PaymentScreen() {
   const router = useRouter();
@@ -25,27 +27,27 @@ export default function PaymentScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  // 1. Recibir parámetros (incluyendo la imagen)
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   const params = useLocalSearchParams() as {
     carId: string;
     carName: string;
     price: string;
     ownerId: string;
-    image: string; // Recibimos la URL de la imagen
+    image: string; 
   };
 
   const priceToPay = params.price || '0';
 
-  // 2. Inicializar Stripe (Modo Demo)
   useEffect(() => {
     initPaymentSheet({
       merchantDisplayName: "CarBnb Inc.",
-      paymentIntentClientSecret: 'pi_mock_secret_demo', // Falso, solo para UI
+      paymentIntentClientSecret: 'pi_mock_secret_demo', 
       defaultBillingDetails: { name: 'Usuario Demo' }
     });
   }, []);
 
-  // 3. Guardar Reserva en Firestore
   const createReservation = async () => {
     try {
       if (!auth.currentUser) return;
@@ -53,40 +55,35 @@ export default function PaymentScreen() {
       await addDoc(collection(db, 'reservations'), {
         carId: params.carId,
         carName: params.carName,
-        carImage: params.image || '', // Guardamos la foto para mostrarla en 'Mis Reservas'
+        carImage: params.image || '', 
         renterId: auth.currentUser.uid,
         ownerId: params.ownerId,
         pricePaid: priceToPay,
         status: 'confirmed',
         createdAt: serverTimestamp(),
-        dates: 'Fechas pendientes' // Aquí podrías pasar las fechas reales si las tuvieras
+        dates: 'Fechas pendientes'
       });
       
       setShowSuccessModal(true);
 
     } catch (error) {
       console.error("Error creando reserva:", error);
-      Alert.alert("Error", "El pago pasó pero falló el registro.");
+      Alert.alert(t('error'), t('paymentSuccessRegisterFail'));
     }
   };
 
-  // 4. Manejar el Pago
   const handlePayment = async () => {
     setLoading(true);
     
-    // Intentamos abrir la hoja de pago.
-    // En modo demo (sin backend), esto fallará o no completará el proceso real.
     const { error } = await presentPaymentSheet();
 
     if (error) {
-        // Si falla (esperado en demo), mostramos alerta y procedemos
         Alert.alert(
-            "Modo Demo / Escolar",
-            "La pasarela de Stripe requiere un servidor backend. Simularemos que el pago fue exitoso.",
-            [{ text: "Continuar", onPress: () => createReservation() }]
+            t('demoModeTitle'),
+            t('demoModeMsg'),
+            [{ text: t('continue'), onPress: () => createReservation() }]
         );
     } else {
-      // Si el pago fuera real
       createReservation();
     }
     setLoading(false);
@@ -94,14 +91,15 @@ export default function PaymentScreen() {
 
   const handleGoHome = () => {
     setShowSuccessModal(false);
-    router.navigate('/drawer/home');
+    // Usamos replace o push para asegurar compatibilidad
+    router.replace('/drawer/home');
   };
 
   return (
     <SafeAreaView className="flex-1 bg-white">
       <ScrollView contentContainerClassName="p-5">
         
-        <Text className="text-2xl font-bold mb-6 text-gray-800">Confirmar y Pagar</Text>
+        <Text className="text-2xl font-bold mb-6 text-gray-800">{t('confirmPayTitle')}</Text>
         
         {/* --- Resumen de la Orden --- */}
         <View className="bg-gray-50 p-4 rounded-2xl border border-gray-100 mb-6 shadow-sm">
@@ -120,9 +118,9 @@ export default function PaymentScreen() {
               )}
               
               <View className="flex-1">
-                  <Text className="text-gray-500 text-xs uppercase font-bold">Vehículo</Text>
+                  <Text className="text-gray-500 text-xs uppercase font-bold">{t('vehicleLabel')}</Text>
                   <Text className="text-lg font-bold text-gray-800" numberOfLines={1}>
-                      {params.carName || 'Auto seleccionado'}
+                      {params.carName || t('selectedCarDefault')}
                   </Text>
               </View>
            </View>
@@ -130,7 +128,7 @@ export default function PaymentScreen() {
            <View className="h-px bg-gray-200 mb-3" />
            
            <View className="flex-row justify-between items-center">
-              <Text className="text-gray-600">Total a pagar</Text>
+              <Text className="text-gray-600">{t('totalToPay')}</Text>
               <Text className="text-2xl font-bold text-orange-500">${priceToPay}</Text>
            </View>
         </View>
@@ -139,7 +137,7 @@ export default function PaymentScreen() {
         <View className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex-row items-center mb-8">
             <Ionicons name="shield-checkmark" size={24} color="#3b82f6" style={{marginRight: 12}} />
             <Text className="text-blue-700 flex-1 text-sm leading-5">
-            Pagos procesados de forma segura por Stripe. No almacenamos tu información financiera.
+            {t('stripeSecurityMsg')}
             </Text>
         </View>
 
@@ -154,7 +152,7 @@ export default function PaymentScreen() {
             ) : (
                 <View className="flex-row items-center">
                     <Ionicons name="card" size={24} color="white" style={{ marginRight: 10 }} />
-                    <Text className="text-white font-bold text-lg">Pagar Ahora</Text>
+                    <Text className="text-white font-bold text-lg">{t('payNowBtn')}</Text>
                 </View>
             )}
         </TouchableOpacity>
@@ -168,16 +166,16 @@ export default function PaymentScreen() {
               <View className="bg-green-100 p-4 rounded-full mb-4">
                   <Ionicons name="checkmark" size={40} color="#22c55e" />
               </View>
-              <Text className="text-2xl font-bold text-gray-800 mb-2">¡Reserva Exitosa!</Text>
+              <Text className="text-2xl font-bold text-gray-800 mb-2">{t('reservationSuccessTitle')}</Text>
               <Text className="text-gray-500 text-center mb-8 text-base">
-                Tu vehículo ha sido reservado correctamente. Puedes ver los detalles en "Mis Reservaciones".
+                {t('reservationSuccessMsg')}
               </Text>
               
               <TouchableOpacity 
                 onPress={handleGoHome} 
                 className="bg-orange-500 py-4 px-10 rounded-full w-full"
               >
-                 <Text className="text-white font-bold text-center text-lg">Volver al Inicio</Text>
+                 <Text className="text-white font-bold text-center text-lg">{t('backToHome')}</Text>
               </TouchableOpacity>
            </View>
         </View>

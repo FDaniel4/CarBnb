@@ -15,15 +15,23 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 // Importaciones de lógica interna
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useThemeColor } from "../../hooks/use-theme-color"; // Ajusta la ruta si usas '@/hooks'
-import { auth } from "../../utils/firebaseConfig"; // Ajusta la ruta si usas '@/utils'
+import { useThemeColor } from "../../hooks/use-theme-color";
+import { auth } from "../../utils/firebaseConfig";
 
 // --- Importar Librerías de Expo ---
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+// Nota: Ajusta la ruta '../' o '../../' según dónde esté tu carpeta context.
+// Si está en 'app/context', desde 'app/login' es '../context'
+import { useLanguage } from '../context/LanguageContext';
+
 const LoginScreen: React.FC = () => {
   const router = useRouter();
+  
+  // 2. USAR HOOK DE TRADUCCIÓN
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,8 +66,8 @@ const LoginScreen: React.FC = () => {
   // --- Función para Login Biométrico ---
   const handleBiometricLogin = async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Inicia sesión con FaceID o Huella',
-      fallbackLabel: 'Usar contraseña',
+      promptMessage: t('biometricPrompt'),
+      fallbackLabel: t('usePassword'),
     });
 
     if (result.success) {
@@ -79,11 +87,11 @@ const LoginScreen: React.FC = () => {
           
           router.replace("/drawer/home");
         } else {
-          Alert.alert("Error", "No se encontraron credenciales guardadas.");
+          Alert.alert(t('error'), t('biometricNotFound'));
         }
       } catch (error: any) {
         console.log("Biometric Login Error:", error);
-        Alert.alert("Error", "Falló el inicio de sesión biométrico.");
+        Alert.alert(t('error'), t('biometricAuthFailed'));
       } finally {
         setLoading(false);
       }
@@ -92,7 +100,7 @@ const LoginScreen: React.FC = () => {
 
   const handleLogin = () => {
     if (!email || !password) {
-      Alert.alert("Error", "Por favor ingresa email y contraseña.");
+      Alert.alert(t('error'), t('enterEmailPassword'));
       return;
     }
     setLoading(true);
@@ -103,12 +111,12 @@ const LoginScreen: React.FC = () => {
         // --- Preguntar si quiere guardar biometría ---
         if (isBiometricSupported) {
             Alert.alert(
-                "Habilitar Biometría",
-                "¿Quieres usar tu cara o huella para entrar la próxima vez?",
+                t('enableBiometricsTitle'),
+                t('enableBiometricsMsg'),
                 [
-                    { text: "No", style: "cancel", onPress: () => router.replace("/drawer/home") },
+                    { text: t('no'), style: "cancel", onPress: () => router.replace("/drawer/home") },
                     { 
-                        text: "Sí", 
+                        text: t('yes'), 
                         onPress: async () => {
                             await SecureStore.setItemAsync('secure_email', email);
                             await SecureStore.setItemAsync('secure_password', password);
@@ -130,11 +138,11 @@ const LoginScreen: React.FC = () => {
           error.code === "auth/user-not-found" ||
           error.code === "auth/wrong-password"
         ) {
-          Alert.alert("Error", "Credenciales inválidas. Intenta de nuevo.");
+          Alert.alert(t('error'), t('invalidCredentials'));
         } else {
           Alert.alert(
-            "Error",
-            "Ocurrió un error inesperado. Intenta de nuevo."
+            t('error'),
+            t('unexpectedError')
           );
         }
       });
@@ -161,7 +169,6 @@ const LoginScreen: React.FC = () => {
       <View className="w-full items-center">
         {/* LOGO */}
         <View className="mt-[15%] mb-8">
-          {/* Asegúrate de tener esta imagen o cambia la ruta a la que tenías antes */}
           <Image
             source={require("../../assets/images/Logo-trans.png")} 
             style={{ width: 160, height: 160 }}
@@ -170,7 +177,7 @@ const LoginScreen: React.FC = () => {
         </View>
 
         <Text className="text-3xl font-bold mb-8" style={{ color: textColor }}>
-          Sign in
+          {t('signIn')}
         </Text>
 
         {/* FORMULARIO */}
@@ -182,7 +189,7 @@ const LoginScreen: React.FC = () => {
           >
             <Ionicons name="mail-outline" size={20} color={textColor} />
             <TextInput
-              placeholder="Email"
+              placeholder={t('email')}
               placeholderTextColor="#888"
               onChangeText={setEmail}
               value={email}
@@ -201,7 +208,7 @@ const LoginScreen: React.FC = () => {
           >
             <Ionicons name="lock-closed-outline" size={20} color={textColor} />
             <TextInput
-              placeholder="Password"
+              placeholder={t('password')}
               placeholderTextColor="#888"
               onChangeText={setPassword}
               value={password}
@@ -222,7 +229,7 @@ const LoginScreen: React.FC = () => {
           disabled={loading}
         >
           <Text className="text-white text-lg font-bold">
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t('signingIn') : t('signIn')}
           </Text>
         </TouchableOpacity>
 
@@ -235,21 +242,21 @@ const LoginScreen: React.FC = () => {
           >
              <Ionicons name="finger-print" size={24} color={textColor} style={{ marginRight: 10 }} />
              <Text className="text-base font-semibold" style={{ color: textColor }}>
-               Ingresar con Biometría
+               {t('biometricLogin')}
              </Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={handleForgotPassword}>
-          <Text className="text-sm text-gray-400">Forgot password?</Text>
+          <Text className="text-sm text-gray-400">{t('forgotPassword')}</Text>
         </TouchableOpacity>
       </View>
 
       <View className="flex-row justify-center items-center">
-        <Text className="text-sm text-gray-400">Don't have an account? </Text>
+        <Text className="text-sm text-gray-400">{t('dontHaveAccount')} </Text>
         <TouchableOpacity onPress={handleSignUp}>
           <Text className="text-sm text-[#F97A4B] font-bold">
-            Create acount
+            {t('createAccount')}
           </Text>
         </TouchableOpacity>
       </View>

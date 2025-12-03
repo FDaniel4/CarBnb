@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
   LayoutAnimation,
@@ -10,10 +11,12 @@ import {
   useColorScheme,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 
 // --- Hooks de Tema ---
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeColor } from '../../../hooks/use-theme-color';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../../context/LanguageContext';
 
 // Habilitar animaciones en Android
 if (
@@ -31,40 +34,39 @@ interface FAQItem {
 export default function FAQScreen() {
   const [expandido, setExpandido] = useState<number | null>(null);
 
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   // --- Tema ---
   const scheme = useColorScheme();
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
   // Colores específicos para las tarjetas
   const cardBg = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
-  const answerBg = scheme === 'dark' ? '#2C2C2E' : '#FFF8F0'; // Mantenemos el toque crema suave en light
+  const answerBg = scheme === 'dark' ? '#2C2C2E' : '#FFF8F0'; 
   const borderColor = scheme === 'dark' ? '#3A3A3C' : '#E5E5E5';
 
+  // 3. CONSTRUIR EL ARRAY USANDO t()
   const datosFAQ: FAQItem[] = [
     {
-      pregunta: '¿Cómo puedo publicar mi auto?',
-      respuesta:
-        "Dirígete a la sección 'Publicar Auto' en el menú, llena los datos de tu vehículo, sube una foto y presiona el botón 'Publicar ahora'.",
+      pregunta: t('faq_q1'),
+      respuesta: t('faq_a1'),
     },
     {
-      pregunta: '¿Tiene algún costo publicar un auto?',
-      respuesta:
-        'No, publicar tu vehículo es totalmente gratuito. Solo se cobra una pequeña comisión cuando tu auto es rentado exitosamente.',
+      pregunta: t('faq_q2'),
+      respuesta: t('faq_a2'),
     },
     {
-      pregunta: '¿Cómo recibo mis pagos?',
-      respuesta:
-        'Los pagos se transfieren automáticamente a tu cuenta bancaria registrada o vía PayPal después de cada renta completada y verificada.',
+      pregunta: t('faq_q3'),
+      respuesta: t('faq_a3'),
     },
     {
-      pregunta: '¿Puedo desactivar mi publicación?',
-      respuesta:
-        'Sí, puedes ir a la sección "Mis Autos" y eliminar tu publicación en cualquier momento si ya no deseas rentar tu vehículo.',
+      pregunta: t('faq_q4'),
+      respuesta: t('faq_a4'),
     },
     {
-      pregunta: '¿Qué pasa si dañan mi auto?',
-      respuesta:
-        'Todos los viajes incluyen un seguro de cobertura amplia. En caso de siniestro, nuestro equipo de soporte te guiará durante todo el proceso.',
+      pregunta: t('faq_q5'),
+      respuesta: t('faq_a5'),
     },
   ];
 
@@ -77,9 +79,9 @@ export default function FAQScreen() {
     <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
       <ScrollView contentContainerClassName="p-5">
         
-        {/* Título */}
+        {/* Título Traducido */}
         <Text className="text-3xl font-bold mb-6 text-center" style={{ color: textColor }}>
-          Preguntas Frecuentes
+          {t('faq')}
         </Text>
 
         {/* Lista de Preguntas */}

@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    useColorScheme,
+  Alert,
+  Image,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useColorScheme,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -15,12 +15,19 @@ import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/utils/firebaseConfig';
+// Usamos rutas relativas para consistencia
+import { auth } from '../../utils/firebaseConfig';
 
-import { useThemeColor } from '@/hooks/use-theme-color';
+import { useThemeColor } from '../../hooks/use-theme-color';
+
+// 1. IMPORTAR CONTEXTO
+import { useLanguage } from '../context/LanguageContext';
 
 const ForgotPasswordScreen: React.FC = () => {
   const router = useRouter();
+  
+  // 2. USAR HOOK
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
 
@@ -33,17 +40,17 @@ const ForgotPasswordScreen: React.FC = () => {
 
   const handleResetPassword = () => {
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address.');
+      Alert.alert(t('error'), t('enterEmailError')); // <-- Traducido
       return;
     }
-setLoading(true);
+    setLoading(true);
 
     sendPasswordResetEmail(auth, email)
       .then(() => {
         setLoading(false);
         Alert.alert(
-          'Check your email',
-          'If an account with that email exists, we have sent a link to reset your password.',
+          t('checkEmailTitle'), // <-- Traducido
+          t('checkEmailMsg'),   // <-- Traducido
           [
             {
               text: 'OK',
@@ -57,11 +64,11 @@ setLoading(true);
         console.log('Password Reset Error:', error.code);
 
         if (error.code === 'auth/invalid-email') {
-          Alert.alert('Error', 'Please enter a valid email address.');
+          Alert.alert(t('error'), t('enterValidEmailError')); // <-- Traducido
         } else {
           Alert.alert(
-            'Check your email',
-            'If an account with that email exists, we have sent a link to reset your password.',
+            t('checkEmailTitle'), // <-- Traducido
+            t('checkEmailMsg'),   // <-- Traducido
             [
               {
                 text: 'OK',
@@ -80,7 +87,7 @@ setLoading(true);
   return (
     <SafeAreaView className="flex-1 items-center justify-between pb-4"
     style={{backgroundColor: background}}>
-      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} // <-- Aplicar
+      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} 
         backgroundColor={background} />
 
       {/* Contenedor principal para centrar el formulario */}
@@ -97,13 +104,13 @@ setLoading(true);
         {/* ---- TÍTULO "Forgot Password" ---- */}
         <Text className="text-3xl font-bold text-gray-800 mb-4"
           style={{ color: textColor }}>
-          Forgot Password
+          {t('forgotPasswordTitle')} {/* <-- Traducido */}
         </Text>
 
         {/* ---- TEXTO DESCRIPTIVO ---- */}
         <Text className="text-sm w-[85%] text-center mb-8"
         style={{ color: textColor }}>
-          Enter your email and we'll send you a link to reset your password.
+          {t('forgotPasswordSubtitle')} {/* <-- Traducido */}
         </Text>
 
         {/* ---- SECCIÓN INPUT ---- */}
@@ -115,7 +122,7 @@ setLoading(true);
           >
             <Ionicons name="mail-outline" size={20} color={textColor} />
             <TextInput
-              placeholder="Email"
+              placeholder={t('email')} // <-- Traducido
               placeholderTextColor="#888"
               onChangeText={setEmail}
               value={email}
@@ -137,7 +144,7 @@ setLoading(true);
           disabled={loading}
         >
           <Text className="text-white text-lg font-bold">
-            {loading ? 'Sending link...' : 'Send Reset Link'}
+            {loading ? t('sendingLinkBtn') : t('sendLinkBtn')} {/* <-- Traducido */}
           </Text>
         </TouchableOpacity>
       </View>
@@ -145,10 +152,10 @@ setLoading(true);
       {/* ---- TEXTO "Back to Sign In" ---- */}
       <View className="flex-row justify-center items-center">
         <Text className="text-sm text-gray-400">
-          Remembered your password?{' '}
+          {t('rememberedPassword')} {/* <-- Traducido */}
         </Text>
         <TouchableOpacity onPress={handleGoBackToLogin}>
-          <Text className="text-sm text-[#F97A4B] font-bold">Sign in</Text>
+          <Text className="text-sm text-[#F97A4B] font-bold"> {t('signIn')}</Text> {/* <-- Traducido */}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

@@ -1,22 +1,25 @@
-import React, { useState } from 'react';
 import {
-  Platform,
-  ScrollView,
-  Text,
-  View,
-  TouchableOpacity,
-  Modal, 
-  Pressable,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+  Ionicons,
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
+import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
 import {
-  MaterialCommunityIcons,
-  Ionicons,
-} from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; 
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
 
 const ReceptionBellIcon = (props: any) => (
   <MaterialCommunityIcons name="bell-ring-outline" {...props} />
@@ -24,15 +27,20 @@ const ReceptionBellIcon = (props: any) => (
 
 export default function BookNowScreen() {
   const router = useRouter(); 
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
 
   // ----- ESTADO PARA LOS MODALS (City, Type, etc.) -----
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalOptions, setModalOptions] = useState<string[]>([]);
-  const [selectedCity, setSelectedCity] = useState('City');
-  const [selectedTransmission, setSelectedTransmission] =
-    useState('Transmission');
-  const [selectedCarType, setSelectedCarType] = useState('Type of car');
+  
+  // Inicializamos con el texto "default" traducido o una clave temporal que luego renderizamos
+  const [selectedCity, setSelectedCity] = useState(''); 
+  const [selectedTransmission, setSelectedTransmission] = useState('');
+  const [selectedCarType, setSelectedCarType] = useState('');
+  
   const [modalAction, setModalAction] = useState<
     ((value: string) => void) | null
   >(null);
@@ -42,8 +50,10 @@ export default function BookNowScreen() {
   const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
-  const [fromDateText, setFromDateText] = useState('From');
-  const [toDateText, setToDateText] = useState('To');
+  
+  // Usamos strings vacíos para saber si se ha seleccionado fecha o no
+  const [fromDateText, setFromDateText] = useState(''); 
+  const [toDateText, setToDateText] = useState('');
 
   const openModal = (
     title: string,
@@ -56,13 +66,11 @@ export default function BookNowScreen() {
     setShowModal(true);
   };
 
-  // --- Función para abrir el DatePicker (sin cambios) ---
   const openDatePicker = (pickerType: 'from' | 'to') => {
     setCurrentPicker(pickerType);
     setShowDatePicker(true);
   };
 
-  // --- Funciones de DatePicker (sin cambios) ---
   const onChangeDate = (
     event: DateTimePickerEvent,
     selectedDate: Date | undefined
@@ -105,51 +113,56 @@ export default function BookNowScreen() {
       >
         <View className="flex-row items-center space-x-2 mb-6 pt-4">
           <ReceptionBellIcon size={28} color="#F97A4B" />
-          <Text className="text-2xl font-bold text-gray-900">Book now</Text>
+          <Text className="text-2xl font-bold text-gray-900">{t('bookNowTitle')}</Text>
         </View>
 
         <View className="space-y-4">
+          {/* Selector de Ciudad */}
           <TouchableOpacity
             className="flex-row justify-between items-center py-4 px-4 bg-orange-100 border border-orange-200 rounded-lg"
             onPress={() =>
               openModal(
-                'Select City',
-                ['New York', 'Los Angeles', 'Chicago', 'Miami'],
+                t('selectCity'),
+                ['New York', 'Los Angeles', 'Chicago', 'Miami', 'Aguascalientes', 'CDMX'], 
                 setSelectedCity 
               )
             }
           >
-            <Text className="text-gray-700 text-base">{selectedCity}</Text>
+            {/* Si no hay ciudad seleccionada, muestra "City" (traducido), si no, la ciudad */}
+            <Text className="text-gray-700 text-base">
+                {selectedCity || t('cityDefault')}
+            </Text>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
 
+          {/* Fechas */}
           <View>
-            <Text className="text-gray-500 mb-2">Date</Text>
+            <Text className="text-gray-500 mb-2">{t('dateLabel')}</Text>
             <TouchableOpacity
               onPress={() => openDatePicker('from')}
               className="flex-row justify-between items-center border-b border-gray-300 py-3 mb-3"
             >
               <Text
                 className={`text-lg ${
-                  fromDateText === 'From' ? 'text-gray-500' : 'text-gray-800'
+                  !fromDateText ? 'text-gray-500' : 'text-gray-800'
                 }`}
               >
-                {fromDateText}
+                {fromDateText || t('fromLabel')}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#6b7280" />
             </TouchableOpacity>
 
-            <Text className="text-gray-500 mb-2">Date</Text>
+            <Text className="text-gray-500 mb-2">{t('dateLabel')}</Text>
             <TouchableOpacity
               onPress={() => openDatePicker('to')}
               className="flex-row justify-between items-center border-b border-gray-300 py-3"
             >
               <Text
                 className={`text-lg ${
-                  toDateText === 'To' ? 'text-gray-500' : 'text-gray-800'
+                  !toDateText ? 'text-gray-500' : 'text-gray-800'
                 }`}
               >
-                {toDateText}
+                {toDateText || t('toLabel')}
               </Text>
               <Ionicons name="chevron-down" size={20} color="#6b7280" />
             </TouchableOpacity>
@@ -160,14 +173,14 @@ export default function BookNowScreen() {
             className="flex-row justify-between items-center py-4 px-4 bg-orange-100 border border-orange-200 rounded-lg"
             onPress={() =>
               openModal(
-                'Select Transmission',
-                ['Automatic', 'Manual'],
-                setSelectedTransmission // <-- Pasamos la función setter
+                t('selectTransmission'),
+                [t('automatic'), t('manual')],
+                setSelectedTransmission
               )
             }
           >
             <Text className="text-gray-700 text-base">
-              {selectedTransmission}
+              {selectedTransmission || t('transmissionDefault')}
             </Text>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
@@ -177,13 +190,15 @@ export default function BookNowScreen() {
             className="flex-row justify-between items-center py-4 px-4 bg-orange-100 border border-orange-200 rounded-lg"
             onPress={() =>
               openModal(
-                'Select Car Type',
+                t('selectCarType'),
                 ['Sedan', 'SUV', 'Truck', 'Sport'],
-                setSelectedCarType // <-- Pasamos la 'setter'
+                setSelectedCarType
               )
             }
           >
-            <Text className="text-gray-700 text-base">{selectedCarType}</Text>
+            <Text className="text-gray-700 text-base">
+                {selectedCarType || t('carTypeDefault')}
+            </Text>
             <Ionicons name="chevron-forward" size={20} color="#6b7280" />
           </TouchableOpacity>
 
@@ -210,12 +225,13 @@ export default function BookNowScreen() {
             }}
           >
             <Text className="text-white text-base font-bold text-center">
-              SEARCH
+              {t('searchBtn')}
             </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
+      {/* Modal General */}
       <Modal
         transparent={true}
         visible={showModal}
@@ -273,7 +289,7 @@ export default function BookNowScreen() {
             className="py-2 px-4"
             onPress={() => setShowDatePicker(false)}
           >
-            <Text className="text-blue-500 text-base">Cancel</Text>
+            <Text className="text-blue-500 text-base">{t('cancel')}</Text>
           </TouchableOpacity>
           <TouchableOpacity className="py-2 px-4" onPress={onDoneIOS}>
             <Text className="text-blue-500 text-base font-bold">Done</Text>

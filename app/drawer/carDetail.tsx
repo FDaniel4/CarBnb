@@ -12,6 +12,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useThemeColor } from '../../hooks/use-theme-color';
 
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
+
 const UserIcon = ({ color }: { color: string }) => (
   <FontAwesome name="user" size={20} color={color} />
 );
@@ -21,6 +24,10 @@ const CogIcon = ({ color }: { color: string }) => (
 
 export default function CarDetailScreen() {
   const router = useRouter();
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   const scheme = useColorScheme();
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -39,22 +46,17 @@ export default function CarDetailScreen() {
   };
 
   // --- FUNCIÓN DE REPARACIÓN DE URL ---
-  // Si Expo Router decodificó la URL de Firebase (quitó los %2F), esto la arregla.
   const getFixedUrl = (urlParam: string | string[] | undefined) => {
     if (!urlParam) return "";
     let url = Array.isArray(urlParam) ? urlParam[0] : urlParam;
 
-    // Si es una URL de Firebase Storage y tiene la estructura rota
     if (url.includes("firebasestorage.googleapis.com") && url.includes("/o/")) {
         const parts = url.split("/o/");
         if (parts.length >= 2) {
             const base = parts[0];
             const rest = parts[1];
-            // Separamos el path de los query params (?alt=...)
             const [path, query] = rest.split("?");
             
-            // Si el path tiene barras normales (/), significa que se rompió.
-            // Las volvemos a codificar a %2F
             if (path.includes("/")) {
                 return `${base}/o/${encodeURIComponent(path)}?${query}`;
             }
@@ -73,7 +75,7 @@ export default function CarDetailScreen() {
         carName: params.name,
         price: params.price,
         ownerId: params.ownerId,
-        image: imageUrl, // Pasamos la URL ya arreglada
+        image: imageUrl, 
       },
     });
   };
@@ -94,7 +96,7 @@ export default function CarDetailScreen() {
           ) : (
             <View className="w-full h-full items-center justify-center bg-gray-300">
                 <Ionicons name="image-outline" size={50} color="gray" />
-                <Text style={{color: 'gray'}}>Imagen no disponible</Text>
+                <Text style={{color: 'gray'}}>{t('imageUnavailable')}</Text>
             </View>
           )}
           
@@ -126,7 +128,7 @@ export default function CarDetailScreen() {
                     <Text className="text-2xl font-bold text-orange-500">
                         ${params.price}
                     </Text>
-                    <Text className="text-xs text-gray-400">/día</Text>
+                    <Text className="text-xs text-gray-400">{t('perDay')}</Text>
                 </View>
             </View>
 
@@ -138,7 +140,7 @@ export default function CarDetailScreen() {
                 >
                     <UserIcon color={textColor} />
                     <Text className="ml-3 font-semibold" style={{ color: textColor }}>
-                        {params.passengers} Pasajeros
+                        {params.passengers} {t('passengersLabel')}
                     </Text>
                 </View>
 
@@ -148,19 +150,19 @@ export default function CarDetailScreen() {
                 >
                     <CogIcon color={textColor} />
                     <Text className="ml-3 font-semibold" style={{ color: textColor }}>
-                        {params.transmission}
+                        {params.transmission === 'Auto' ? t('automatic') : (params.transmission === 'Manual' ? t('manual') : params.transmission)}
                     </Text>
                 </View>
             </View>
 
             {/* Descripción */}
             <Text className="text-lg font-bold mb-3" style={{ color: textColor }}>
-                Descripción
+                {t('descriptionLabel')}
             </Text>
             <Text className="text-base text-gray-500 leading-6 mb-10">
                 {params.description && params.description.trim() !== "" && params.description !== "undefined"
                     ? params.description 
-                    : "El propietario no ha proporcionado una descripción detallada para este vehículo, pero cuenta con todas las características de seguridad estándar."}
+                    : t('noDescriptionProvided')}
             </Text>
 
             {/* Botón Reservar */}
@@ -169,7 +171,7 @@ export default function CarDetailScreen() {
                 onPress={handleReserve}
             >
                 <Text className="text-white font-bold text-xl">
-                    Reservar Ahora
+                    {t('bookNow')}
                 </Text>
             </TouchableOpacity>
 

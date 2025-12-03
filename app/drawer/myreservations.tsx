@@ -15,8 +15,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 // --- Firebase y Hooks ---
 import { signOut } from 'firebase/auth';
 import { collection, onSnapshot, orderBy, query, where } from 'firebase/firestore';
-import { useThemeColor } from '../../hooks/use-theme-color'; // Asegúrate de tener este hook
-import { auth, db } from '../../utils/firebaseConfig'; // Asegúrate de que esta ruta sea correcta
+import { useThemeColor } from '../../hooks/use-theme-color';
+import { auth, db } from '../../utils/firebaseConfig';
+
+// 1. IMPORTAR EL CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
 
 // Tipo de dato que viene de Firestore
 type Reservation = {
@@ -32,6 +35,9 @@ type Reservation = {
 export default function MyReservationsScreen() {
   const router = useRouter();
   
+  // 2. USAR EL HOOK DE TRADUCCIÓN
+  const { t } = useLanguage();
+  
   // --- Estados ---
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,14 +52,12 @@ export default function MyReservationsScreen() {
 
   // 1. Cargar Reservas
   useEffect(() => {
-    // Si es invitado, mostramos pantalla de bloqueo
     if (!auth.currentUser || auth.currentUser.isAnonymous) {
         setIsGuest(true);
         setLoading(false);
         return;
     }
 
-    // Query: Dame las reservas donde YO soy el renterId, ordenadas por fecha
     const q = query(
       collection(db, 'reservations'),
       where('renterId', '==', auth.currentUser.uid),
@@ -95,6 +99,16 @@ export default function MyReservationsScreen() {
       }
   };
 
+  // Helper para traducir el estatus
+  const getStatusLabel = (status: string) => {
+    switch(status) {
+        case 'confirmed': return t('confirmed');
+        case 'completed': return t('completed');
+        case 'cancelled': return t('cancelled');
+        default: return status;
+    }
+  };
+
   if (loading) {
     return (
         <SafeAreaView className="flex-1 justify-center items-center" style={{ backgroundColor: background }}>
@@ -110,7 +124,8 @@ export default function MyReservationsScreen() {
           <View className="flex-1 justify-center items-center p-6">
               <MaterialCommunityIcons name="lock-alert-outline" size={80} color={scheme === 'dark' ? '#555' : '#DDD'} />
               <Text className="text-2xl font-bold mt-6 text-center" style={{ color: textColor }}>
-                  Historial Restringido
+                  {/* Puedes agregar estas claves a translations.js si faltan */}
+                  Historial Restringido 
               </Text>
               <Text className="text-gray-500 mt-2 text-center mb-10 text-base leading-6">
                   Inicia sesión para ver tus viajes pasados y futuros.
@@ -119,7 +134,7 @@ export default function MyReservationsScreen() {
                   className="bg-orange-500 py-4 px-10 rounded-full shadow-lg"
                   onPress={() => signOut(auth)}
               >
-                  <Text className="text-white font-bold text-lg">Iniciar Sesión</Text>
+                  <Text className="text-white font-bold text-lg">{t('signIn')}</Text>
               </TouchableOpacity>
           </View>
       </SafeAreaView>
@@ -135,7 +150,7 @@ export default function MyReservationsScreen() {
         <View className="flex-row items-center space-x-3 mb-6">
             <MaterialCommunityIcons name="clipboard-check-outline" size={32} color="#F97A4B" />
             <Text className="text-3xl font-bold" style={{ color: textColor }}>
-                Mis Reservaciones
+                {t('myReservations')} {/* <-- TRADUCIDO */}
             </Text>
         </View>
 
@@ -143,12 +158,12 @@ export default function MyReservationsScreen() {
           // Estado Vacío
           <View className="items-center mt-20 opacity-50">
              <MaterialCommunityIcons name="car-key" size={80} color="gray" />
-             <Text className="text-gray-500 mt-4 text-lg text-center">Aún no tienes viajes.</Text>
+             <Text className="text-gray-500 mt-4 text-lg text-center">{t('noReservations')}</Text>
              <TouchableOpacity 
                 className="mt-4 bg-orange-100 px-6 py-3 rounded-full"
                 onPress={() => router.push('/drawer/home')}
              >
-                 <Text className="text-orange-500 font-bold">Explorar Autos</Text>
+                 <Text className="text-orange-500 font-bold">{t('exploreCars')}</Text>
              </TouchableOpacity>
           </View>
         ) : (
@@ -179,7 +194,7 @@ export default function MyReservationsScreen() {
                                 {/* Badge de Status */}
                                 <View className={`px-2 py-1 rounded-md ${getStatusColor(item.status)}`}>
                                     <Text className={`text-[10px] uppercase font-bold ${getStatusTextColor(item.status)}`}>
-                                        {item.status === 'confirmed' ? 'Confirmado' : item.status}
+                                        {getStatusLabel(item.status)} {/* <-- TRADUCIDO */}
                                     </Text>
                                 </View>
                             </View>
@@ -190,10 +205,9 @@ export default function MyReservationsScreen() {
 
                         <View className="flex-row justify-between items-end">
                             <View>
-                                <Text className="text-xs text-gray-400 uppercase">Total Pagado</Text>
+                                <Text className="text-xs text-gray-400 uppercase">{t('totalPaid')}</Text>
                                 <Text className="text-lg font-bold text-orange-500">${item.pricePaid}</Text>
                             </View>
-                            {/* Botón de acción pequeño (ej. ver detalle) */}
                             <TouchableOpacity className="bg-gray-100 dark:bg-gray-700 p-2 rounded-full">
                                 <Ionicons name="chevron-forward" size={16} color="gray" />
                             </TouchableOpacity>

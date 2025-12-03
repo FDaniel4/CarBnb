@@ -20,8 +20,14 @@ import { doc, setDoc } from "firebase/firestore";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
 
+// 1. IMPORTAR CONTEXTO
+import { useLanguage } from "../context/LanguageContext";
+
 const CreateAccountScreen: React.FC = () => {
   const router = useRouter();
+  
+  // 2. USAR HOOK
+  const { t } = useLanguage();
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -36,7 +42,7 @@ const CreateAccountScreen: React.FC = () => {
 
   const handleCreateAccount = () => {
     if (!fullName || !email || !password) {
-      Alert.alert("Error", "Please fill in all fields.");
+      Alert.alert(t('error'), t('fillAllFields')); // <-- Traducido
       return;
     }
     setLoading(true);
@@ -63,7 +69,7 @@ const CreateAccountScreen: React.FC = () => {
         } catch (dbError) {
           console.error("Firestore Error:", dbError);
           setLoading(false);
-          Alert.alert("Error", "Could not save user profile.");
+          Alert.alert(t('error'), t('saveProfileError')); // <-- Traducido
         }
       })
       .catch((authError) => {
@@ -71,27 +77,27 @@ const CreateAccountScreen: React.FC = () => {
         console.log("Auth Error:", authError.code);
 
         if (authError.code === "auth/email-already-in-use") {
-          Alert.alert("Error", "That email address is already in use.");
+          Alert.alert(t('error'), t('emailInUse')); // <-- Traducido
         } else if (authError.code === "auth/weak-password") {
-          Alert.alert("Error", "Password should be at least 6 characters.");
+          Alert.alert(t('error'), t('weakPassword')); // <-- Traducido
         } else if (authError.code === "auth/invalid-email") {
-          Alert.alert("Error", "That email address is invalid.");
+          Alert.alert(t('error'), t('invalidEmail')); // <-- Traducido
         } else {
-          Alert.alert("Error", "An unexpected error occurred. Please try again.");
+          Alert.alert(t('error'), t('unexpectedError')); // <-- Traducido
         }
       });
   };
 
   const handleSignIn = () => {
-    // Navega a la pantalla de Login
     router.push("/login/LoginScreen");
   };
 
   const handleShowTerms = () => {
-    //TODO: Aqui se debera abrir una pantalla de terminos y condiciones
+    // Si tienes una pantalla real de términos, usa router.push('/drawer/help/support')
+    // Por ahora mantenemos la alerta traducida
     Alert.alert(
-      "Terms & Conditions",
-      "Here are the terms and conditions of using Car BNB..."
+      t('termsAlertTitle'), // <-- Traducido
+      t('termsAlertMsg')    // <-- Traducido
     );
   };
 
@@ -109,9 +115,9 @@ const CreateAccountScreen: React.FC = () => {
         />
       </View>
 
-      {/* ---- TÍTULO "Sign up" ---- */}
+      {/* ---- TÍTULO ---- */}
       <Text className="text-3xl font-bold text-gray-800 mb-8"
-        style={{ color: textColor }}>Create acount</Text>
+        style={{ color: textColor }}>{t('createAccountTitle')}</Text> {/* <-- Traducido */}
 
       {/* ---- SECCIÓN INPUTS ---- */}
       <View className="w-[85%] space-y-4 mb-8">
@@ -120,7 +126,7 @@ const CreateAccountScreen: React.FC = () => {
           style={{ backgroundColor: inputBackground }}>
           <Ionicons name="person-outline" size={20} color={textColor} />
           <TextInput
-            placeholder="Full name"
+            placeholder={t('fullNamePlaceholder')} // <-- Traducido
             placeholderTextColor="#888"
             onChangeText={setFullName}
             value={fullName}
@@ -135,7 +141,7 @@ const CreateAccountScreen: React.FC = () => {
           style={{ backgroundColor: inputBackground }}>
           <Ionicons name="mail-outline" size={20} color={textColor} />
           <TextInput
-            placeholder="Email"
+            placeholder={t('email')} // <-- Traducido
             placeholderTextColor="#888"
             onChangeText={setEmail}
             value={email}
@@ -152,7 +158,7 @@ const CreateAccountScreen: React.FC = () => {
           style={{ backgroundColor: inputBackground }}>
           <Ionicons name="lock-closed-outline" size={20} color="#888" />
           <TextInput
-            placeholder="Password"
+            placeholder={t('password')} // <-- Traducido
             placeholderTextColor="#888"
             onChangeText={setPassword}
             value={password}
@@ -173,28 +179,27 @@ const CreateAccountScreen: React.FC = () => {
         disabled={loading}
       >
         <Text className="text-white text-lg font-bold">
-          {loading ? "Creating account..." : "Create your account"}
+          {loading ? t('creatingAccountBtn') : t('createAccountBtn')} {/* <-- Traducido */}
         </Text>
       </TouchableOpacity>
 
       {/* ---- TEXTO DE TÉRMINOS ---- */}
-      {/* Usamos flex-row y flex-wrap para que el texto se ajuste */}
       <View className="w-[85%] flex-row flex-wrap justify-center items-center mb-4">
         <Text className="text-xs text-gray-400">
-          By creating an account, you agree to our{" "}
+          {t('termsAgreement')} {/* <-- Traducido */}
         </Text>
         <TouchableOpacity onPress={handleShowTerms}>
           <Text className="text-xs text-gray-600 font-bold underline">
-            Terms
+            {t('termsLink')} {/* <-- Traducido */}
           </Text>
         </TouchableOpacity>
       </View>
 
       {/* ---- TEXTO SIGN IN ---- */}
       <View className="flex-row justify-center items-center">
-        <Text className="text-sm text-gray-400">Already have an account? </Text>
+        <Text className="text-sm text-gray-400">{t('alreadyHaveAccount')} </Text> {/* <-- Traducido */}
         <TouchableOpacity onPress={handleSignIn}>
-          <Text className="text-sm text-[#F97A4B] font-bold">Sign in</Text>
+          <Text className="text-sm text-[#F97A4B] font-bold">{t('signIn')}</Text> {/* <-- Traducido */}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

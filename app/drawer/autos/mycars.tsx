@@ -1,25 +1,28 @@
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   Modal,
+  Alert as NativeAlert,
   ScrollView,
   Text,
   TouchableOpacity,
   View,
-  ActivityIndicator,
-  Alert as NativeAlert,
 } from "react-native";
-import { MaterialIcons, Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// --- Firebase y Hooks (Rutas relativas para evitar errores) ---
-import { auth, db, storage } from "../../../utils/firebaseConfig";
-import { collection, query, where, onSnapshot, deleteDoc, doc } from "firebase/firestore";
-import { ref, deleteObject } from "firebase/storage";
-import { signOut } from "firebase/auth"; // Importamos signOut
-import { useThemeColor } from "../../../hooks/use-theme-color";
+// --- Firebase y Hooks ---
+import { signOut } from "firebase/auth";
+import { collection, deleteDoc, doc, onSnapshot, query, where } from "firebase/firestore";
+import { deleteObject, ref } from "firebase/storage";
 import { useColorScheme } from "react-native";
+import { useThemeColor } from "../../../hooks/use-theme-color";
+import { auth, db, storage } from "../../../utils/firebaseConfig";
+
+// 1. IMPORTAR CONTEXTO
+import { useLanguage } from "../../context/LanguageContext";
 
 // Definimos el tipo de Auto
 type Car = {
@@ -35,6 +38,9 @@ type Car = {
 export default function MyCarsScreen() {
   const router = useRouter();
   
+  // 2. USAR HOOK DE TRADUCCIÓN
+  const { t } = useLanguage();
+  
   // --- Tema ---
   const scheme = useColorScheme();
   const background = useThemeColor({}, 'background');
@@ -47,11 +53,10 @@ export default function MyCarsScreen() {
   const [loading, setLoading] = useState(true);
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
-  const [isGuest, setIsGuest] = useState(false); // Estado para invitado
+  const [isGuest, setIsGuest] = useState(false);
 
-  // 1. Cargar autos de Firestore en tiempo real (y checar Auth)
+  // 1. Cargar autos
   useEffect(() => {
-    // Si no hay usuario o es anónimo
     if (!auth.currentUser || auth.currentUser.isAnonymous) {
         setIsGuest(true);
         setLoading(false);
@@ -75,9 +80,9 @@ export default function MyCarsScreen() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Función para Logout (Redirigir a Login)
+  // 2. Función para Logout
   const handleLoginRedirect = () => {
-      signOut(auth); // Esto detonará el cambio en _layout y mandará al usuario al inicio
+      signOut(auth);
   };
 
   const handleDeletePress = (car: Car) => {
@@ -99,10 +104,10 @@ export default function MyCarsScreen() {
          }
       }
       await deleteDoc(doc(db, 'cars', selectedCar.id));
-      NativeAlert.alert("¡Eliminado!", "El vehículo ha sido eliminado correctamente.");
+      NativeAlert.alert(t('deletedTitle'), t('deletedMsg'));
     } catch (error) {
       console.error("Error eliminando auto:", error);
-      NativeAlert.alert("Error", "No se pudo eliminar el vehículo.");
+      NativeAlert.alert(t('error'), t('deleteErrorMsg'));
     }
   };
 
@@ -128,16 +133,16 @@ export default function MyCarsScreen() {
             <View className="flex-1 justify-center items-center p-6">
                 <MaterialIcons name="lock-outline" size={100} color={scheme === 'dark' ? '#555' : '#DDD'} />
                 <Text className="text-2xl font-bold mt-6 text-center" style={{ color: textColor }}>
-                    Acceso Restringido
+                    {t('accessRestricted')}
                 </Text>
                 <Text className="text-gray-500 mt-2 text-center mb-10 text-base leading-6">
-                    Para gestionar tus vehículos y publicarlos en la plataforma, necesitas una cuenta verificada.
+                    {t('guestMessageCars')}
                 </Text>
                 <TouchableOpacity
                     className="bg-orange-500 py-4 px-10 rounded-full shadow-lg shadow-orange-200"
                     onPress={handleLoginRedirect}
                 >
-                    <Text className="text-white font-bold text-lg">Iniciar Sesión / Registrarse</Text>
+                    <Text className="text-white font-bold text-lg">{t('loginRegister')}</Text>
                 </TouchableOpacity>
             </View>
         </SafeAreaView>
@@ -150,7 +155,7 @@ export default function MyCarsScreen() {
       <View className="p-4 flex-1">
         
         <View className="flex-row justify-between items-center mb-6 mt-2">
-             <Text className="text-2xl font-bold" style={{ color: textColor }}>Mis Autos</Text>
+             <Text className="text-2xl font-bold" style={{ color: textColor }}>{t('myCarsTitle')}</Text>
              <TouchableOpacity 
                 className="bg-orange-500 p-2 rounded-full"
                 onPress={() => router.push('/drawer/publish/publishcar')}
@@ -162,7 +167,7 @@ export default function MyCarsScreen() {
         {cars.length === 0 ? (
             <View className="flex-1 justify-center items-center opacity-50">
                 <MaterialIcons name="no-photography" size={60} color="gray" />
-                <Text className="text-gray-500 mt-4 text-center text-base">No has publicado autos aún.</Text>
+                <Text className="text-gray-500 mt-4 text-center text-base">{t('noCarsPublished')}</Text>
             </View>
         ) : (
             <ScrollView contentContainerClassName="pb-10">
@@ -200,7 +205,7 @@ export default function MyCarsScreen() {
                     </View>
 
                     <Text className="text-xs text-gray-400 mt-1" numberOfLines={2}>
-                        {car.description || "Sin descripción detallada."}
+                        {car.description || t('noDescription')}
                     </Text>
 
                     <View className="flex-row mt-2">
@@ -224,10 +229,11 @@ export default function MyCarsScreen() {
             <View className="bg-white dark:bg-gray-800 p-6 rounded-2xl w-full max-w-sm items-center shadow-lg">
               <MaterialIcons name="warning" size={50} color="#FF7A00" />
               <Text className="text-lg font-bold text-center my-4 dark:text-white">
-                ¿Eliminar vehículo?
+                {t('deleteCarTitle')}
               </Text>
+              
               <Text className="text-sm text-gray-500 text-center mb-6 dark:text-gray-300">
-                Esta acción eliminará "{selectedCar?.name}" permanentemente y no se puede deshacer.
+                {t('deleteWarningPrefix')}{selectedCar?.name}{t('deleteWarningSuffix')}
               </Text>
               
               <View className="flex-row w-full space-x-4">
@@ -235,13 +241,13 @@ export default function MyCarsScreen() {
                   className="flex-1 py-3 rounded-xl bg-gray-200 dark:bg-gray-700"
                   onPress={() => setConfirmVisible(false)}
                 >
-                  <Text className="text-center font-bold text-gray-700 dark:text-gray-200">Cancelar</Text>
+                  <Text className="text-center font-bold text-gray-700 dark:text-gray-200">{t('cancel')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   className="flex-1 py-3 rounded-xl bg-red-500"
                   onPress={confirmDelete}
                 >
-                  <Text className="text-center font-bold text-white">Eliminar</Text>
+                  <Text className="text-center font-bold text-white">{t('delete')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -251,4 +257,4 @@ export default function MyCarsScreen() {
       </View>
     </SafeAreaView>
   );
-};
+}

@@ -2,13 +2,16 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React from 'react';
 import {
+  Pressable,
+  Image as RNImage,
   ScrollView,
-  View,
   Text,
-  Pressable, 
-  Image as RNImage, 
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
 
 const UserIcon = (props: { size: number; color: string }) => (
   <FontAwesome name="user" size={props.size} color={props.color} />
@@ -60,6 +63,9 @@ const availableCars = [
 // --- Componente de la Tarjeta de Auto  ---
 const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
   const router = useRouter();
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
 
   return (
     <Pressable
@@ -68,6 +74,9 @@ const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
         router.push({
           pathname: '/drawer/carDetail',
           params: {
+            // Nota: Aquí falta 'id', 'image' (string url) y 'ownerId' que CarDetail espera.
+            // Al usar mock data con require(), pasar la imagen así puede causar problemas en CarDetail
+            // si este espera una URL string. Pero mantengo tu estructura original.
             name: car.name,
             style: car.style,
             price: car.price,
@@ -110,7 +119,7 @@ const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
           <View>
             <Text className="text-xl font-bold text-orange-500">
               ${car.price}
-              <Text className="text-xs font-normal text-gray-900"> /día</Text>
+              <Text className="text-xs font-normal text-gray-900"> {t('perDay')}</Text> {/* <-- Traducido */}
             </Text>
           </View>
         </View>
@@ -121,12 +130,14 @@ const CarListItem = ({ car }: { car: (typeof availableCars)[0] }) => {
 
 // --- Pantalla de Resultados de Búsqueda  ---
 export default function SearchResultsScreen() {
-  // Lógica de 'params' 
   const params = useLocalSearchParams() as {
     city?: string;
     from?: string;
     to?: string;
   };
+
+  // 3. USAR EL HOOK DE IDIOMA EN LA PANTALLA PRINCIPAL
+  const { t } = useLanguage();
 
   return (
     <SafeAreaView className="flex-1 bg-white">
@@ -134,10 +145,10 @@ export default function SearchResultsScreen() {
         <View className="p-5 space-y-4">
           <View>
             <Text className="text-2xl font-bold text-gray-900">
-              Resultados en {params.city || 'tu ciudad'}
+              {t('resultsIn')} {params.city || t('yourCity')} {/* <-- Traducido */}
             </Text>
             <Text className="text-sm text-gray-900">
-              Desde {params.from || '...'} hasta {params.to || '...'}
+              {t('fromLower')} {params.from || '...'} {t('toLower')} {params.to || '...'} {/* <-- Traducido */}
             </Text>
           </View>
 
