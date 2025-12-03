@@ -123,7 +123,7 @@ const ChangePassword = () => {
 
       {/* Botón Volver */}
       <TouchableOpacity
-        onPress={() => router.back()}
+        onPress={() => router.push('/drawer/profile/profile')} 
         style={{ marginTop: 20 }}
       >
         <Text style={{ color: '#eb6409', fontWeight: '600', fontSize: 16 }}>

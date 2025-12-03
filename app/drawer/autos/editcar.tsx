@@ -14,10 +14,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Firebase y Hooks (Rutas relativas para mayor seguridad) ---
+// --- Firebase y Hooks ---
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useThemeColor } from '../../../hooks/use-theme-color';
 import { db } from '../../../utils/firebaseConfig';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../../context/LanguageContext';
 
 type CarData = {
   name: string;
@@ -32,6 +35,9 @@ type CarData = {
 export default function EditCarScreen() {
   const router = useRouter();
   const { carId } = useLocalSearchParams() as { carId: string };
+  
+  // 2. USAR HOOK DE IDIOMA
+  const { t } = useLanguage();
 
   // --- Tema ---
   const scheme = useRNScheme();
@@ -64,12 +70,12 @@ export default function EditCarScreen() {
         if (docSnap.exists()) {
           setCarData(docSnap.data() as CarData);
         } else {
-          Alert.alert('Error', 'No se encontró el auto.');
+          Alert.alert(t('error'), t('carNotFound')); // <-- Traducido
           router.back();
         }
       } catch (error) {
         console.error(error);
-        Alert.alert('Error', 'Hubo un problema al cargar los datos.');
+        Alert.alert(t('error'), t('loadError')); // <-- Traducido
       } finally {
         setLoading(false);
       }
@@ -80,7 +86,7 @@ export default function EditCarScreen() {
   // 2. Guardar cambios
   const handleSave = async () => {
     if (!carData.name || !carData.price) {
-        Alert.alert("Error", "El nombre y el precio no pueden estar vacíos.");
+        Alert.alert(t('error'), t('validationError')); // <-- Traducido
         return;
     }
 
@@ -91,15 +97,14 @@ export default function EditCarScreen() {
         name: carData.name,
         price: carData.price,
         description: carData.description,
-        // Podrías agregar más campos editables aquí si quieres
       });
       
-      Alert.alert('¡Guardado!', 'La información de tu auto ha sido actualizada.', [
+      Alert.alert(t('saved'), t('saveSuccessMsg'), [ // <-- Traducido
           { text: 'OK', onPress: () => router.back() }
       ]);
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'No se pudieron guardar los cambios.');
+      Alert.alert(t('error'), t('saveErrorMsg')); // <-- Traducido
     } finally {
       setSaving(false);
     }
@@ -125,7 +130,7 @@ export default function EditCarScreen() {
             >
                 <Ionicons name="arrow-back" size={24} color={textColor} />
             </TouchableOpacity>
-            <Text className="text-2xl font-bold" style={{ color: textColor }}>Editar Auto</Text>
+            <Text className="text-2xl font-bold" style={{ color: textColor }}>{t('editCarTitle')}</Text> {/* <-- Traducido */}
         </View>
 
         {/* Tarjeta de Edición */}
@@ -141,13 +146,13 @@ export default function EditCarScreen() {
                     resizeMode="cover"
                 />
                  <View className="absolute bottom-2 right-2 bg-black/60 px-3 py-1 rounded-full">
-                    <Text className="text-white text-xs">La foto no se puede cambiar aquí</Text>
+                    <Text className="text-white text-xs">{t('photoReadOnly')}</Text> {/* <-- Traducido */}
                  </View>
             </View>
 
             {/* Nombre */}
             <View className="mb-4">
-                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">Nombre del Vehículo</Text>
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">{t('carNameLabel')}</Text> {/* <-- Traducido */}
                 <View className="flex-row items-center rounded-lg px-3" style={{ backgroundColor: inputBg }}>
                     <TextInput
                         value={carData.name}
@@ -161,7 +166,7 @@ export default function EditCarScreen() {
 
             {/* Precio */}
             <View className="mb-4">
-                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">Precio por día ($)</Text>
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">{t('priceLabel')}</Text> {/* <-- Traducido */}
                 <View className="flex-row items-center rounded-lg px-3" style={{ backgroundColor: inputBg }}>
                     <Text className="text-orange-500 text-lg font-bold mr-1">$</Text>
                     <TextInput
@@ -176,7 +181,7 @@ export default function EditCarScreen() {
 
              {/* Descripción */}
              <View className="mb-2">
-                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">Descripción</Text>
+                <Text className="text-xs uppercase font-bold text-gray-500 mb-1">{t('descriptionLabel')}</Text> {/* <-- Traducido */}
                 <TextInput
                     value={carData.description}
                     onChangeText={(text) => setCarData({...carData, description: text})}
@@ -198,7 +203,7 @@ export default function EditCarScreen() {
             {saving ? (
                 <ActivityIndicator color="white" />
             ) : (
-                <Text className="text-white text-lg font-bold">Guardar Cambios</Text>
+                <Text className="text-white text-lg font-bold">{t('saveChanges')}</Text> /* <-- Traducido */
             )}
         </TouchableOpacity>
 

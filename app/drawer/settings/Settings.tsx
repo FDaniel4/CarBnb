@@ -4,16 +4,20 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity, // <-- Importamos TouchableOpacity
+  TouchableOpacity,
   useColorScheme as useRNScheme,
   View,
 } from 'react-native';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router'; // <-- Importamos useRouter
+import { useRouter } from 'expo-router';
 import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+// --- 1. IMPORTAR EL CONTEXTO DE IDIOMA ---
+// Ajusta la ruta "../../.." si tu carpeta está en otro nivel
+import { useLanguage } from '../../context/LanguageContext';
 
 // --- Componente para Interruptores (Switch) ---
 const SettingToggle = ({
@@ -69,7 +73,7 @@ const SettingAction = ({
   onPress,
   textColor,
   borderColor,
-  isLast = false, // Para quitar el borde al último
+  isLast = false,
 }: {
   iconName: React.ComponentProps<typeof Ionicons>['name'];
   label: string;
@@ -94,7 +98,11 @@ const SettingAction = ({
 );
 
 export default function SettingsScreen() {
-  const router = useRouter(); // <-- Hook de navegación
+  const router = useRouter();
+  
+  // --- 2. ACTIVAR EL HOOK DE IDIOMA ---
+  const { language, setLanguage, t } = useLanguage();
+
   const { colorScheme, setColorScheme } = useNativeWindColorScheme();
   const scheme = useRNScheme();
   const background = useThemeColor({}, 'background');
@@ -129,21 +137,28 @@ export default function SettingsScreen() {
     });
   };
 
+  // --- 3. LÓGICA PARA EL SWITCH DE IDIOMA ---
+  const toggleLanguage = (value: boolean) => {
+    // value = true significa que el usuario movió el switch a la derecha -> Inglés
+    setLanguage(value ? 'en' : 'es');
+  };
+
   const [notifications, setNotifications] = useState(true);
 
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
       <View className="px-5 pt-5">
+        {/* TÍTULO PRINCIPAL TRADUCIDO */}
         <Text
           className="text-3xl font-bold mb-6"
           style={{ color: textColor }}
         >
-          Configuración
+          {t('settings')}
         </Text>
 
         {/* --- SECCIÓN GENERAL --- */}
         <Text className="text-sm font-semibold text-gray-500 uppercase mb-2">
-          General
+          {t('generalSection')}
         </Text>
         <View
           className="rounded-lg p-4 mb-6"
@@ -151,7 +166,7 @@ export default function SettingsScreen() {
         >
           <SettingToggle
             iconName={isDarkMode ? 'moon-outline' : 'sunny-outline'}
-            label="Modo Oscuro"
+            label={t('darkMode')}
             value={isDarkMode}
             onValueChange={toggleDarkMode}
             textColor={textColor}
@@ -159,26 +174,30 @@ export default function SettingsScreen() {
           />
           <SettingToggle
             iconName="notifications-outline"
-            label="Notificaciones"
+            label={t('notifications')}
             value={notifications}
             onValueChange={setNotifications}
             textColor={textColor}
             borderColor={borderColor}
           />
+          
+          {/* --- SWITCH DE IDIOMA AHORA ACTIVO --- */}
           <SettingToggle
             iconName="language-outline"
-            label="Idioma (Próximamente)"
-            value={false}
-            onValueChange={() => {}}
-            disabled={true}
+            // Muestra "Idioma (Español)" o "Idioma (English)"
+            label={`${t('language')} (${language === 'es' ? 'Español' : 'English'})`}
+            // Si es 'en', el switch está activado (derecha)
+            value={language === 'en'}
+            onValueChange={toggleLanguage}
+            disabled={false} // ¡Ya no está deshabilitado!
             textColor={textColor}
-            borderColor="transparent" // El último del grupo sin borde
+            borderColor="transparent"
           />
         </View>
 
         {/* --- SECCIÓN AYUDA Y LEGAL --- */}
         <Text className="text-sm font-semibold text-gray-500 uppercase mb-2">
-          Ayuda y Legal
+          {t('helpSection')}
         </Text>
         <View
           className="rounded-lg p-4"
@@ -186,24 +205,24 @@ export default function SettingsScreen() {
         >
           <SettingAction
             iconName="help-circle-outline"
-            label="Preguntas Frecuentes"
+            label={t('faq')}
             onPress={() => router.push('/drawer/help/faq')}
             textColor={textColor}
             borderColor={borderColor}
           />
           <SettingAction
             iconName="document-text-outline"
-            label="Términos y Condiciones"
+            label={t('terms')}
             onPress={() => router.push('/drawer/help/support')}
             textColor={textColor}
             borderColor={borderColor}
           />
           <SettingAction
             iconName="call-outline"
-            label="Soporte"
+            label={t('support')}
             onPress={() => router.push('/drawer/help/soporteReal')}
             textColor={textColor}
-            borderColor="transparent" // El último del grupo sin borde
+            borderColor="transparent"
             isLast={true}
           />
         </View>

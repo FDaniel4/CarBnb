@@ -16,13 +16,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // --- Hooks y Firebase ---
-import { useThemeColor } from '@/hooks/use-theme-color';
-import { auth, db, storage } from '@/utils/firebaseConfig';
-import { onAuthStateChanged, sendPasswordResetEmail, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { collection, doc, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { useThemeColor } from '../../../hooks/use-theme-color';
+import { auth, db, storage } from '../../../utils/firebaseConfig';
 
-// Tipo de datos del usuario
+// --- Contexto de idioma ---
+import { useLanguage } from '../../context/LanguageContext';
+
 type UserData = {
   fullName: string;
   email: string;
@@ -32,6 +34,7 @@ type UserData = {
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { t } = useLanguage(); // Traducción
 
   // --- Estados ---
   const [userData, setUserData] = useState<UserData | null>(null);
@@ -50,14 +53,15 @@ export default function ProfileScreen() {
   const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#F9FAFB';
   const borderColor = scheme === 'dark' ? '#3A3A3C' : '#E5E7EB';
 
+  // --- Mensaje si es invitado ---
   const requireLogin = () => {
     Alert.alert(
-      "¡Opps!",
-      "Necesitas una cuenta para realizar esta acción.",
+      t('opps'),
+      t('loginRequiredMsg'),
       [
-        { text: "Cancelar", style: "cancel" },
+        { text: t('cancel'), style: 'cancel' },
         {
-          text: "Ir a Login",
+          text: t('goToLogin'),
           onPress: () => signOut(auth),
         },
       ]
@@ -77,7 +81,6 @@ export default function ProfileScreen() {
         setIsGuest(false);
         const userDocRef = doc(db, 'users', user.uid);
 
-        // Suscripción a los datos del usuario
         const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data() as UserData;
@@ -87,7 +90,7 @@ export default function ProfileScreen() {
           setLoading(false);
         });
 
-        // 🔹 Suscripciones en tiempo real a los autos y reservas
+        // 🔹 Contadores en tiempo real
         const carsQuery = query(collection(db, 'cars'), where('ownerId', '==', user.uid));
         const reservationsQuery = query(collection(db, 'reservations'), where('renterId', '==', user.uid));
 
@@ -115,7 +118,7 @@ export default function ProfileScreen() {
     try {
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permiso necesario', 'Se requiere acceso a la galería.');
+        Alert.alert(t('permissionRequired'), t('galleryPermissionMsg'));
         return;
       }
 
@@ -140,11 +143,11 @@ export default function ProfileScreen() {
         const downloadURL = await getDownloadURL(storageRef);
         await updateDoc(doc(db, 'users', userId), { profilePictureUrl: downloadURL });
 
-        Alert.alert('¡Listo!', 'Foto de perfil actualizada.');
+        Alert.alert(t('ready'), t('profilePicUpdated'));
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Error', 'No se pudo subir la imagen.');
+      Alert.alert(t('error'), t('uploadImageError'));
     } finally {
       setUploadingImage(false);
     }
@@ -158,22 +161,11 @@ export default function ProfileScreen() {
     setSavingPhone(true);
     try {
       await setDoc(doc(db, 'users', auth.currentUser.uid), { phone }, { merge: true });
-      Alert.alert('Guardado', 'Número de teléfono actualizado.');
+      Alert.alert(t('saved'), t('phoneUpdated'));
     } catch (error) {
-      Alert.alert('Error', 'No se pudo guardar el teléfono.');
+      Alert.alert(t('error'), t('savePhoneError'));
     } finally {
       setSavingPhone(false);
-    }
-  };
-
-  // --- Cambiar contraseña ---
-  const handleChangePassword = () => {
-    if (isGuest) return requireLogin();
-
-    if (userData?.email) {
-      sendPasswordResetEmail(auth, userData.email)
-        .then(() => Alert.alert('Enviado', 'Revisa tu correo para cambiar la contraseña.'))
-        .catch(() => Alert.alert('Error', 'No se pudo enviar el correo.'));
     }
   };
 
@@ -194,7 +186,6 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
       <ScrollView contentContainerClassName="flex-grow items-center p-5">
-
         {/* --- FOTO DE PERFIL --- */}
         <View className="mt-8 mb-5 relative">
           <TouchableOpacity onPress={handlePickImage} disabled={uploadingImage}>
@@ -209,7 +200,7 @@ export default function ProfileScreen() {
               {uploadingImage ? (
                 <ActivityIndicator size="small" color="white" />
               ) : (
-                <Ionicons name={isGuest ? "lock-closed" : "camera"} size={20} color="white" />
+                <Ionicons name={isGuest ? 'lock-closed' : 'camera'} size={20} color="white" />
               )}
             </View>
           </TouchableOpacity>
@@ -219,15 +210,13 @@ export default function ProfileScreen() {
         <View className="items-center mb-8 w-full">
           <View className="flex-row items-center justify-center mb-1">
             <Text className="text-2xl font-bold text-center" style={{ color: textColor }}>
-              {isGuest ? 'Invitado' : (userData?.fullName || 'Usuario')}
+              {isGuest ? t('guest') : userData?.fullName || t('userDefault')}
             </Text>
-            {!isGuest && (
-              <Ionicons name="checkmark-circle" size={20} color="#3b82f6" style={{ marginLeft: 6 }} />
-            )}
+            {!isGuest && <Ionicons name="checkmark-circle" size={20} color="#3b82f6" style={{ marginLeft: 6 }} />}
           </View>
 
           <Text className="text-base text-gray-500 mb-4">
-            {isGuest ? 'Regístrate para ver tus datos' : userData?.email}
+            {isGuest ? t('guestEmailMsg') : userData?.email}
           </Text>
 
           <View
@@ -238,7 +227,7 @@ export default function ProfileScreen() {
             <TextInput
               value={phone}
               onChangeText={setPhone}
-              placeholder={isGuest ? "No disponible" : "Agrega tu teléfono"}
+              placeholder={isGuest ? t('notAvailable') : t('addPhonePlaceholder')}
               placeholderTextColor="#9ca3af"
               keyboardType="phone-pad"
               editable={!isGuest}
@@ -248,7 +237,7 @@ export default function ProfileScreen() {
             {!isGuest && (
               <TouchableOpacity onPress={handleSavePhone} disabled={savingPhone}>
                 <Text className="text-xs font-bold text-orange-500 ml-2">
-                  {savingPhone ? '...' : 'GUARDAR'}
+                  {savingPhone ? '...' : t('saveBtn')}
                 </Text>
               </TouchableOpacity>
             )}
@@ -259,37 +248,53 @@ export default function ProfileScreen() {
         {/* --- MÉTRICAS DINÁMICAS --- */}
         <View className="flex-row w-full justify-around mb-10">
           <View className="items-center flex-1 p-4 rounded-xl mr-2" style={{ backgroundColor: cardBackground }}>
-            <Text className="text-xl font-bold" style={{ color: textColor }}>{myCarsCount}</Text>
-            <Text className="text-xs text-gray-500 uppercase mt-1">Autos</Text>
+            <Text className="text-xl font-bold" style={{ color: textColor }}>
+              {myCarsCount}
+            </Text>
+            <Text className="text-xs text-gray-500 uppercase mt-1">{t('carsLabel')}</Text>
           </View>
           <View className="items-center flex-1 p-4 rounded-xl ml-2" style={{ backgroundColor: cardBackground }}>
             <Text className="text-xl font-bold text-orange-500">{myReservationsCount}</Text>
-            <Text className="text-xs text-gray-500 uppercase mt-1">Reservas</Text>
+            <Text className="text-xs text-gray-500 uppercase mt-1">{t('reservationsLabel')}</Text>
           </View>
         </View>
 
         {/* --- BOTONES --- */}
-        <View className="w-full space-y-4 ">
+        <View className="w-full space-y-4">
           <TouchableOpacity
             className={`py-4 rounded-xl items-center shadow-sm mb-1 ${isGuest ? 'bg-gray-400' : 'bg-orange-500'}`}
             onPress={() => router.push('/drawer/profile/changePassword')}
           >
             <Text className="text-white text-base font-bold">
-              {isGuest ? 'Iniciar Sesión' : 'Cambiar Contraseña'}
+              {isGuest ? t('signIn') : t('changePassword')}
             </Text>
           </TouchableOpacity>
 
+          {/* --- BOTÓN DE RESERVACIONES --- */}
+          <TouchableOpacity
+            className="py-4 rounded-xl items-center border"
+            style={{ borderColor: isGuest ? 'gray' : '#F97A4B' }}
+            onPress={() => {
+              if (isGuest) return requireLogin();
+              router.push('/drawer/myreservations');
+            }}
+          >
+            <Text className={`text-base font-bold ${isGuest ? 'text-gray-500' : 'text-orange-500'}`}>
+              {t('myReservations')}
+            </Text>
+          </TouchableOpacity>
+
+          {/* --- BOTÓN DE MIS AUTOS --- */}
           <TouchableOpacity
             className="py-4 rounded-xl items-center border"
             style={{ borderColor: isGuest ? 'gray' : 'orange' }}
             onPress={handleMyCars}
           >
             <Text className={`text-base font-bold ${isGuest ? 'text-gray-500' : 'text-orange-500'}`}>
-              Ver Mis Autos
+              {t('viewMyCars')}
             </Text>
           </TouchableOpacity>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );

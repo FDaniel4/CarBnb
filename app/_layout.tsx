@@ -1,11 +1,11 @@
 import { ThemeProvider } from '@react-navigation/native';
 import { StripeProvider } from '@stripe/stripe-react-native';
+import * as NavigationBar from 'expo-navigation-bar';
 import { Slot, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import * as NavigationBar from 'expo-navigation-bar';
 
 // --- Imports usando rutas relativas (../) para evitar errores ---
 import { onAuthStateChanged } from 'firebase/auth';
@@ -13,6 +13,9 @@ import "../global.css";
 import { useColorScheme } from '../hooks/use-color-scheme';
 import { useThemeColor } from '../hooks/use-theme-color';
 import { auth } from '../utils/firebaseConfig';
+
+// 1. IMPORTAR EL PROVIDER DE IDIOMA
+import { LanguageProvider } from './context/LanguageContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -25,7 +28,6 @@ function AuthLayout() {
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
 
-  // 🚫 Ocultar barra de navegación de Android SIEMPRE
   useEffect(() => {
     NavigationBar.setVisibilityAsync("hidden");
     NavigationBar.setBehaviorAsync("overlay-swipe");
@@ -98,7 +100,10 @@ export default function RootLayout() {
         publishableKey={stripeKey}
         merchantIdentifier="merchant.com.carbnb.app"
       >
-        <AuthLayout />
+        {/* 2. ENVOLVER LA APLICACIÓN CON EL CONTEXTO DE IDIOMA AQUI */}
+        <LanguageProvider>
+            <AuthLayout />
+        </LanguageProvider>
       </StripeProvider>
     </GestureHandlerRootView>
   );

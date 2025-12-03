@@ -29,11 +29,14 @@ import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestor
 import { useThemeColor } from '../../hooks/use-theme-color';
 import { auth, db } from '../../utils/firebaseConfig';
 
-// --- Tipos (Actualizado con 'city') ---
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
+
+// --- Tipos ---
 export type Car = {
   id: string;
   name: string;
-  city: string; // <--- Nuevo campo
+  city: string; 
   style: string;
   price: string;
   passengers: number;
@@ -47,7 +50,6 @@ export type Car = {
 const UserIcon = ({ color }: { color: string }) => <FontAwesome name="user" size={14} color={color} />;
 const AutoIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cogs" size={14} color={color} />;
 const ManualIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cog-outline" size={14} color={color} />;
-const CalendarIcon = ({ color }: { color: string }) => <Ionicons name="calendar-outline" size={24} color={color} />;
 
 const CarCard = ({
   car,
@@ -59,6 +61,7 @@ const CarCard = ({
   cardBackground: string;
 }) => {
   const router = useRouter();
+  const { t } = useLanguage();
 
   return (
     <View
@@ -89,10 +92,10 @@ const CarCard = ({
         
         <View className="flex-row items-end justify-between">
           <View>
-             <Text className="text-xs text-gray-500">Desde</Text>
-             <Text className="text-lg font-bold text-orange-500">
-               ${car.price}<Text className="text-xs font-normal text-gray-500">/día</Text>
-             </Text>
+              <Text className="text-xs text-gray-500">{t('fromPriceLabel')}</Text>
+              <Text className="text-lg font-bold text-orange-500">
+                ${car.price}<Text className="text-xs font-normal text-gray-500">{t('perDay')}</Text>
+              </Text>
           </View>
         </View>
 
@@ -103,7 +106,9 @@ const CarCard = ({
           </View>
           <View className="flex-row items-center space-x-1">
             {car.transmission === 'Auto' ? <AutoIcon color={textColor} /> : <ManualIcon color={textColor} />}
-            <Text className="text-xs" style={{ color: textColor }}>{car.transmission}</Text>
+            <Text className="text-xs" style={{ color: textColor }}>
+                {car.transmission === 'Auto' ? t('automatic') : (car.transmission === 'Manual' ? t('manual') : car.transmission)}
+            </Text>
           </View>
         </View>
       </View>
@@ -123,12 +128,11 @@ const CarCard = ({
               image: car.image,
               description: car.description || '',
               ownerId: car.ownerId,
-              // No pasamos city a detail si no es necesario, pero podríamos
             },
           });
         }}
       >
-        <Text className="text-white font-bold uppercase text-xs">Seleccionar</Text>
+        <Text className="text-white font-bold uppercase text-xs">{t('select')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -136,6 +140,10 @@ const CarCard = ({
 
 export default function HomeScreen() {
   const router = useRouter();
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   const { colorScheme, setColorScheme } = useNativeWindColorScheme();
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -201,11 +209,11 @@ export default function HomeScreen() {
           {/* Header */}
           <View className="flex-row justify-between items-center mb-6">
             <View>
-              <Text className="text-3xl font-bold" style={{ color: textColor }}>Explorar</Text>
-              <Text className="text-orange-500 font-bold">Encuentra tu auto ideal</Text>
+              <Text className="text-3xl font-bold" style={{ color: textColor }}>{t('exploreTitle')}</Text>
+              <Text className="text-orange-500 font-bold">{t('exploreSubtitle')}</Text>
             </View>
             <View className="items-end">
-              <Text className="text-[10px] uppercase font-bold text-gray-400 mb-1">Modo {colorScheme}</Text>
+              <Text className="text-[10px] uppercase font-bold text-gray-400 mb-1">{t('modeLabel')} {colorScheme}</Text>
               <Switch
                 value={colorScheme === 'dark'}
                 onValueChange={(val) => setColorScheme(val ? 'dark' : 'light')}
@@ -217,33 +225,33 @@ export default function HomeScreen() {
 
           {/* Carrusel 1: Recién Agregados */}
           <View className="mb-8">
-             <Text className="text-lg font-bold mb-4" style={{ color: textColor }}>Recién Agregados</Text>
-             {loading ? (
-               <ActivityIndicator size="large" color="#f97316" />
-             ) : recentCars.length === 0 ? (
-               <Text className="text-gray-400 italic">No hay autos disponibles de otros usuarios.</Text>
-             ) : (
-               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-                 {recentCars.map(car => (
-                   <CarCard key={car.id} car={car} textColor={textColor} cardBackground={cardBackground} />
-                 ))}
-               </ScrollView>
-             )}
+              <Text className="text-lg font-bold mb-4" style={{ color: textColor }}>{t('recentlyAdded')}</Text>
+              {loading ? (
+                <ActivityIndicator size="large" color="#f97316" />
+              ) : recentCars.length === 0 ? (
+                <Text className="text-gray-400 italic">{t('noRecentCars')}</Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+                  {recentCars.map(car => (
+                    <CarCard key={car.id} car={car} textColor={textColor} cardBackground={cardBackground} />
+                  ))}
+                </ScrollView>
+              )}
           </View>
 
            {/* Carrusel 2: Autos Disponibles */}
            <View className="mb-8">
              <View className="flex-row justify-between items-end mb-4">
-                <Text className="text-lg font-bold" style={{ color: textColor }}>Todos los Autos</Text>
+                <Text className="text-lg font-bold" style={{ color: textColor }}>{t('allCars')}</Text>
                 <TouchableOpacity onPress={() => router.push('/drawer/searchResults')}>
-                    <Text className="text-orange-500 text-xs font-bold">Ver más</Text>
+                    <Text className="text-orange-500 text-xs font-bold">{t('viewMore')}</Text>
                 </TouchableOpacity>
              </View>
              
              {loading ? (
                <ActivityIndicator size="small" color="#f97316" />
              ) : availableCars.length === 0 ? (
-               <Text className="text-gray-400 italic">Pronto habrá más autos.</Text>
+               <Text className="text-gray-400 italic">{t('noAvailableCars')}</Text>
              ) : (
                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
                  {/* Invertimos el orden o mostramos más para variar la vista */}
@@ -256,7 +264,7 @@ export default function HomeScreen() {
 
           {/* Buscador */}
           <View className="rounded-2xl p-5 space-y-4 shadow-sm" style={{ backgroundColor: cardBackground }}>
-            <Text className="font-bold text-gray-400 uppercase text-xs">Busca por fecha y lugar</Text>
+            <Text className="font-bold text-gray-400 uppercase text-xs">{t('searchByDateLocation')}</Text>
             
             {/* Ciudad */}
             <TouchableOpacity 
@@ -266,7 +274,7 @@ export default function HomeScreen() {
             >
               <Ionicons name="location-sharp" size={20} color="#f97316" style={{ marginRight: 12 }} />
               <View className="flex-1">
-                <Text className="text-xs text-gray-400">Ubicación</Text>
+                <Text className="text-xs text-gray-400">{t('locationLabel')}</Text>
                 <Text className="font-bold text-base" style={{ color: textColor }}>{selectedCity}</Text>
               </View>
               <Ionicons name="chevron-down" size={20} color="gray" />
@@ -281,8 +289,8 @@ export default function HomeScreen() {
               >
                 <Ionicons name="calendar" size={18} color="#f97316" style={{ marginRight: 8 }} />
                 <View>
-                   <Text className="text-xs text-gray-400">Desde</Text>
-                   <Text className="font-bold" style={{ color: textColor }}>{formatDate(fromDate)}</Text>
+                    <Text className="text-xs text-gray-400">{t('fromLabel')}</Text>
+                    <Text className="font-bold" style={{ color: textColor }}>{formatDate(fromDate)}</Text>
                 </View>
               </TouchableOpacity>
 
@@ -293,8 +301,8 @@ export default function HomeScreen() {
               >
                 <Ionicons name="calendar" size={18} color="#f97316" style={{ marginRight: 8 }} />
                 <View>
-                   <Text className="text-xs text-gray-400">Hasta</Text>
-                   <Text className="font-bold" style={{ color: textColor }}>{formatDate(toDate)}</Text>
+                    <Text className="text-xs text-gray-400">{t('toLabel')}</Text>
+                    <Text className="font-bold" style={{ color: textColor }}>{formatDate(toDate)}</Text>
                 </View>
               </TouchableOpacity>
             </View>
@@ -313,7 +321,7 @@ export default function HomeScreen() {
                 });
               }}
             >
-              <Text className="text-white font-bold text-lg">Buscar Autos</Text>
+              <Text className="text-white font-bold text-lg">{t('searchCarsBtn')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -324,7 +332,7 @@ export default function HomeScreen() {
         <Pressable className="flex-1 bg-black/50 justify-center p-5" onPress={() => setShowModal(false)}>
           <View className="bg-white rounded-2xl overflow-hidden">
             <View className="p-4 border-b border-gray-100 flex-row justify-between items-center">
-              <Text className="font-bold text-lg">Selecciona Ciudad</Text>
+              <Text className="font-bold text-lg">{t('selectCityTitle')}</Text>
               <TouchableOpacity onPress={() => setShowModal(false)}>
                 <Ionicons name="close" size={24} color="black" />
               </TouchableOpacity>

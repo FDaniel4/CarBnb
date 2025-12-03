@@ -16,13 +16,19 @@ import {
 
 import { useThemeColor } from "@/hooks/use-theme-color";
 
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from "../context/LanguageContext";
+
 const DrawerLayout = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const router = useRouter();
 
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   const scheme = useColorScheme();
   const background = useThemeColor({}, "background");
-    const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';// Para el modal
+  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
   const textColor = useThemeColor({}, "text");
 
   const handleGoHome = () => {
@@ -31,7 +37,7 @@ const DrawerLayout = () => {
 
   return (
     <>
-      {/* 🔔 Modal flotante (Refactorizado con Tailwind y Tema) */}
+      {/* 🔔 Modal flotante */}
       <Modal
         transparent
         visible={showNotifications}
@@ -48,16 +54,16 @@ const DrawerLayout = () => {
             style={{ backgroundColor: cardBackground }}
           >
             <Text className="font-bold text-lg text-orange-500 mb-2.5">
-              🔔 Notificaciones
+              🔔 {t('notifications')} {/* <-- Traducido */}
             </Text>
             <Text className="text-base mb-6" style={{ color: textColor }}>
-              Tu reserva fue confirmada ✅
+              {t('resConfirmed')} {/* <-- Traducido */}
             </Text>
             <Text className="text-base mb-6" style={{ color: textColor }}>
-              Tienes un nuevo mensaje 💬
+              {t('newMsg')} {/* <-- Traducido */}
             </Text>
             <Text className="text-base" style={{ color: textColor }}>
-              Recibiste una reseña 🌟
+              {t('newReview')} {/* <-- Traducido */}
             </Text>
           </Pressable>
         </Pressable>
@@ -123,8 +129,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="home"
           options={{
-            drawerLabel: "Home",
-            title: "Home",
+            drawerLabel: t('home'), // <-- Traducido
+            title: t('home'), // <-- Traducido
             drawerIcon: ({ color, size }: { color: string; size: number }) => (
               <Ionicons name="home-outline" size={size} color={color} />
             ),
@@ -134,8 +140,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="profile/profile"
           options={{
-            drawerLabel: "Profile",
-            title: "Profile",
+            drawerLabel: t('profile'), // <-- Traducido
+            title: t('profile'), // <-- Traducido
             drawerIcon: ({ color, size }: { color: string; size: number }) => (
               <Ionicons name="person-outline" size={size} color={color} />
             ),
@@ -145,8 +151,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="booknow"
           options={{
-            drawerLabel: "Book Now",
-            title: "Book Now",
+            drawerLabel: t('bookNow'), // <-- Traducido
+            title: t('bookNow'), // <-- Traducido
             drawerIcon: ({ color, size }: { color: string; size: number }) => (
               <Ionicons name="calendar-outline" size={size} color={color} />
             ),
@@ -156,8 +162,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="publish/publishcar"
           options={{
-            drawerLabel: "Publicar Auto",
-            title: "Publicar Auto",
+            drawerLabel: t('publishCar'), // <-- Traducido
+            title: t('publishCarTitle'), // <-- Traducido
             drawerIcon: ({ color, size }) => (
               <Ionicons name="car-outline" size={size} color={color} />
             ),
@@ -167,8 +173,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="myreservations"
           options={{
-            drawerLabel: "Mis Reservaciones",
-            title: "Mis Reservaciones",
+            drawerLabel: t('myReservations'), // <-- Traducido
+            title: t('myReservations'), // <-- Traducido
             drawerIcon: ({ color, size }) => (
               <Ionicons name="car-outline" size={size} color={color} />
             ),
@@ -179,8 +185,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="autos/mycars"
           options={{
-            drawerLabel: "Mis Autos",
-            title: "Mis Autos",
+            drawerLabel: t('myCarsLabel'), // <-- Traducido
+            title: t('myCarsTitle'), // <-- Traducido
             drawerIcon: ({ color, size }) => (
               <Ionicons name="car-sport-outline" size={size} color={color} />
             ),
@@ -190,8 +196,8 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="help/faq"
           options={{
-            drawerLabel: "Help & FAQ",
-            title: "Frequently Asked Questions",
+            drawerLabel: t('helpFaq'), // <-- Traducido
+            title: t('faq'), // <-- Traducido
             drawerItemStyle: { display: "none" },
             drawerIcon: ({ color, size }) => (
               <Ionicons name="help-outline" size={size} color={color} />
@@ -204,43 +210,43 @@ const DrawerLayout = () => {
           name="carDetail"
           options={{
             drawerItemStyle: { display: "none" },
-            title: "Detalles del Auto",
+            title: t('carDetail'), // <-- Traducido
           }}
         />
         <Drawer.Screen
           name="payment"
           options={{
             drawerItemStyle: { display: "none" },
-            title: "Pagar Reserva",
+            title: t('payment'), // <-- Traducido
           }}
         />
         <Drawer.Screen
           name="searchResults"
           options={{
             drawerItemStyle: { display: "none" },
-            title: "Autos Disponibles",
+            title: t('searchResults'), // <-- Traducido
           }}
         />
         <Drawer.Screen
           name="autos/editcar"
           options={{
             drawerItemStyle: { display: "none" },
-            title: "Editar mi Auto",
+            title: t('editCarTitle'), // <-- Traducido
           }}
         />
         <Drawer.Screen
           name="profile/changePassword"
           options={{
             drawerItemStyle: { display: "none" },
-            title: "Cambiar contraseña",
+            title: t('changePassword'), // <-- Traducido
           }}
         />
         <Drawer.Screen
           name="help/support"
           options={{
-            drawerLabel: "Terms & Conditions",
+            drawerLabel: t('terms'), // <-- Traducido
             drawerItemStyle: { display: "none" },
-            title: "Terminos y condiciones",
+            title: t('terms'), // <-- Traducido
             drawerIcon: ({ color, size }) => (
               <Ionicons name="document-text-outline" size={size} color={color} />
             ),
@@ -249,9 +255,9 @@ const DrawerLayout = () => {
         <Drawer.Screen
           name="help/soporteReal"
           options={{
-            drawerLabel: "Support",
+            drawerLabel: t('support'), // <-- Traducido
             drawerItemStyle: { display: "none" },
-            title: "TSoporte",
+            title: t('support'), // <-- Traducido
             drawerIcon: ({ color, size }) => (
               <Ionicons name="call-outline" size={size} color={color} />
             ),
@@ -260,7 +266,7 @@ const DrawerLayout = () => {
         <Drawer.Screen
             name="settings/Settings"
             options={{
-              drawerLabel: "Settings",
+              drawerLabel: t('settings'), // <-- Traducido
               title: "",
               drawerIcon: ({ color, size }) => (
                 <Ionicons name="settings-outline" size={size} color={color} />

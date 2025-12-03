@@ -5,7 +5,7 @@ import {
   Alert,
   Image,
   ScrollView,
-  StatusBar, 
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -14,14 +14,20 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { signInAnonymously } from 'firebase/auth';
 import { auth } from '@/utils/firebaseConfig';
+import { signInAnonymously } from 'firebase/auth';
 
 import { useThemeColor } from '@/hooks/use-theme-color';
-import { Background } from '@react-navigation/elements';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
 
 const WelcomeScreen: React.FC = () => {
   const router = useRouter();
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   const [loading, setLoading] = useState(false);
   const background = useThemeColor({}, 'background');
   const textColor = useThemeColor({}, 'text');
@@ -35,6 +41,7 @@ const WelcomeScreen: React.FC = () => {
   const handleSignUp = () => {
     router.push('/login/CreateAcountScreen');
   };
+  
   const handleSkip = () => {
     setLoading(true);
     signInAnonymously(auth)
@@ -44,9 +51,8 @@ const WelcomeScreen: React.FC = () => {
       })
       .catch((error) => {
         console.error('Anonymous Sign-In Error:', error);
-        Alert.alert('Error', 'Could not sign in as guest.');
+        Alert.alert(t('error'), t('guestSignInError'));
         setLoading(false);
-        // isAnonymous: true
       });
   };
 
@@ -63,7 +69,7 @@ const WelcomeScreen: React.FC = () => {
                 loading ? 'text-gray-200' : 'text-gray-400'
               }`}
             >
-              SKIP
+              {t('skip')}
               </Text>
           </TouchableOpacity>
         </View>
@@ -80,7 +86,7 @@ const WelcomeScreen: React.FC = () => {
         {/* ---- SECCIÓN BIENVENIDA ---- */}
         <Text className="text-3xl font-light mb-16"
         style={{color: textColor}}>
-          Welcome
+          {t('welcome')}
         </Text>
 
         {/* ---- BOTÓN SIGN IN ---- */}
@@ -91,7 +97,7 @@ const WelcomeScreen: React.FC = () => {
           onPress={handleSignIn}
           disabled={loading}
         >
-          <Text className="text-white text-lg font-bold">Sign in</Text>
+          <Text className="text-white text-lg font-bold">{t('signIn')}</Text>
         </TouchableOpacity>
 
         {/* ---- SECCIÓN ÍCONOS SOCIALES ---- */}
@@ -129,14 +135,14 @@ const WelcomeScreen: React.FC = () => {
 
         {/* ---- TEXTO DE ABAJO ---- */}
         <View className="flex-row justify-center items-center">
-          <Text className="text-sm text-gray-400">Don't have an account? </Text>
+          <Text className="text-sm text-gray-400">{t('dontHaveAccount')} </Text>
           <TouchableOpacity onPress={handleSignUp} disabled={loading}>
             <Text
               className={`text-sm font-bold ${
                 loading ? 'text-gray-400' : 'text-[#F97A4B]'
               }`}
             >
-              Create acount
+              {t('createAccount')}
             </Text>
           </TouchableOpacity>
         </View>

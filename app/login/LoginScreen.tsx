@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -13,16 +13,25 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { useThemeColor } from "@/hooks/use-theme-color";
-import { auth } from "@/utils/firebaseConfig";
+// Importaciones de lógica interna
 import { signInWithEmailAndPassword } from "firebase/auth";
+import { useThemeColor } from "../../hooks/use-theme-color";
+import { auth } from "../../utils/firebaseConfig";
 
-// --- 1. Importar Librerías de Expo ---
+// --- Importar Librerías de Expo ---
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
 
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+// Nota: Ajusta la ruta '../' o '../../' según dónde esté tu carpeta context.
+// Si está en 'app/context', desde 'app/login' es '../context'
+import { useLanguage } from '../context/LanguageContext';
+
 const LoginScreen: React.FC = () => {
   const router = useRouter();
+  
+  // 2. USAR HOOK DE TRADUCCIÓN
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +46,7 @@ const LoginScreen: React.FC = () => {
   const scheme = useColorScheme();
   const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F3F3F3';
 
-  // --- 2. Verificar soporte y credenciales al iniciar ---
+  // --- Verificar soporte y credenciales al iniciar ---
   useEffect(() => {
     (async () => {
       // A) Revisar si el hardware soporta biometría
@@ -54,11 +63,11 @@ const LoginScreen: React.FC = () => {
     })();
   }, []);
 
-  // --- 3. Función para Login Biométrico ---
+  // --- Función para Login Biométrico ---
   const handleBiometricLogin = async () => {
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: 'Inicia sesión con FaceID o Huella',
-      fallbackLabel: 'Usar contraseña',
+      promptMessage: t('biometricPrompt'),
+      fallbackLabel: t('usePassword'),
     });
 
     if (result.success) {
@@ -69,19 +78,20 @@ const LoginScreen: React.FC = () => {
         const savedPassword = await SecureStore.getItemAsync('secure_password');
 
         if (savedEmail && savedPassword) {
-
-          await SecureStore.setItemAsync('secure_email', savedEmail);
-          await SecureStore.setItemAsync('secure_password', savedPassword);
           // Intentar login en Firebase
           await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
           console.log("Biometric login success");
+          // Guardar de nuevo para refrescar (opcional)
+          await SecureStore.setItemAsync('secure_email', savedEmail);
+          await SecureStore.setItemAsync('secure_password', savedPassword);
+          
           router.replace("/drawer/home");
         } else {
-          Alert.alert("Error", "No se encontraron credenciales guardadas.");
+          Alert.alert(t('error'), t('biometricNotFound'));
         }
       } catch (error: any) {
         console.log("Biometric Login Error:", error);
-        Alert.alert("Error", "Falló el inicio de sesión biométrico.");
+        Alert.alert(t('error'), t('biometricAuthFailed'));
       } finally {
         setLoading(false);
       }
@@ -90,7 +100,7 @@ const LoginScreen: React.FC = () => {
 
   const handleLogin = () => {
     if (!email || !password) {
-      Alert.alert("Error", "Please enter both email and password.");
+      Alert.alert(t('error'), t('enterEmailPassword'));
       return;
     }
     setLoading(true);
@@ -98,15 +108,15 @@ const LoginScreen: React.FC = () => {
       .then(async (userCredential) => {
         console.log("Logged in user:", userCredential.user.email);
         
-        // --- 4. Preguntar si quiere guardar biometría ---
+        // --- Preguntar si quiere guardar biometría ---
         if (isBiometricSupported) {
             Alert.alert(
-                "Habilitar Biometría",
-                "¿Quieres usar tu cara o huella para entrar la próxima vez?",
+                t('enableBiometricsTitle'),
+                t('enableBiometricsMsg'),
                 [
-                    { text: "No", style: "cancel", onPress: () => router.replace("/drawer/home") },
+                    { text: t('no'), style: "cancel", onPress: () => router.replace("/drawer/home") },
                     { 
-                        text: "Sí", 
+                        text: t('yes'), 
                         onPress: async () => {
                             await SecureStore.setItemAsync('secure_email', email);
                             await SecureStore.setItemAsync('secure_password', password);
@@ -128,11 +138,11 @@ const LoginScreen: React.FC = () => {
           error.code === "auth/user-not-found" ||
           error.code === "auth/wrong-password"
         ) {
-          Alert.alert("Error", "Invalid email or password. Please try again.");
+          Alert.alert(t('error'), t('invalidCredentials'));
         } else {
           Alert.alert(
-            "Error",
-            "An unexpected error occurred. Please try again."
+            t('error'),
+            t('unexpectedError')
           );
         }
       });
@@ -152,33 +162,34 @@ const LoginScreen: React.FC = () => {
       style={{ backgroundColor: background }}
     >
       <StatusBar
-        barStyle={
-          useColorScheme() === "dark" ? "light-content" : "dark-content"
-        }
+        barStyle={scheme === "dark" ? "light-content" : "dark-content"}
         backgroundColor={background}
       />
 
       <View className="w-full items-center">
+        {/* LOGO */}
         <View className="mt-[15%] mb-8">
           <Image
-            source={require("@/assets/images/Logo-trans.png")}
+            source={require("../../assets/images/Logo-trans.png")} 
             style={{ width: 160, height: 160 }}
             resizeMode="contain"
           />
         </View>
 
         <Text className="text-3xl font-bold mb-8" style={{ color: textColor }}>
-          Sign in
+          {t('signIn')}
         </Text>
 
+        {/* FORMULARIO */}
         <View className="w-[85%] space-y-4 mb-8">
+          {/* Email */}
           <View
             className="flex-row items-center p-3 rounded-3xl mb-2"
             style={{ backgroundColor: inputBackground }}
           >
             <Ionicons name="mail-outline" size={20} color={textColor} />
             <TextInput
-              placeholder="Email"
+              placeholder={t('email')}
               placeholderTextColor="#888"
               onChangeText={setEmail}
               value={email}
@@ -190,13 +201,14 @@ const LoginScreen: React.FC = () => {
             />
           </View>
 
+          {/* Password */}
           <View
             className="flex-row items-center p-3 rounded-3xl mb-2"
             style={{ backgroundColor: inputBackground }}
           >
             <Ionicons name="lock-closed-outline" size={20} color={textColor} />
             <TextInput
-              placeholder="Password"
+              placeholder={t('password')}
               placeholderTextColor="#888"
               onChangeText={setPassword}
               value={password}
@@ -208,7 +220,7 @@ const LoginScreen: React.FC = () => {
           </View>
         </View>
 
-        {/* ---- BOTÓN SIGN IN ---- */}
+        {/* BOTÓN SIGN IN */}
         <TouchableOpacity
           className={`py-4 w-[85%] rounded-full mb-4 shadow-md shadow-black/20 items-center ${
             loading ? "bg-gray-400" : "bg-[#F97A4B]"
@@ -217,11 +229,11 @@ const LoginScreen: React.FC = () => {
           disabled={loading}
         >
           <Text className="text-white text-lg font-bold">
-            {loading ? "Signing in..." : "Sign in"}
+            {loading ? t('signingIn') : t('signIn')}
           </Text>
         </TouchableOpacity>
 
-        {/* ---- BOTÓN BIOMÉTRICO (Solo si está disponible y configurado) ---- */}
+        {/* BOTÓN BIOMÉTRICO (Solo si está disponible y configurado) */}
         {isBiometricSupported && hasSavedCredentials && (
           <TouchableOpacity
             className="flex-row items-center justify-center py-3 w-[85%] rounded-full border border-gray-300 mb-6"
@@ -230,21 +242,21 @@ const LoginScreen: React.FC = () => {
           >
              <Ionicons name="finger-print" size={24} color={textColor} style={{ marginRight: 10 }} />
              <Text className="text-base font-semibold" style={{ color: textColor }}>
-               Ingresar con Biometría
+               {t('biometricLogin')}
              </Text>
           </TouchableOpacity>
         )}
 
         <TouchableOpacity onPress={handleForgotPassword}>
-          <Text className="text-sm text-gray-400">Forgot password?</Text>
+          <Text className="text-sm text-gray-400">{t('forgotPassword')}</Text>
         </TouchableOpacity>
       </View>
 
       <View className="flex-row justify-center items-center">
-        <Text className="text-sm text-gray-400">Don't have an account? </Text>
+        <Text className="text-sm text-gray-400">{t('dontHaveAccount')} </Text>
         <TouchableOpacity onPress={handleSignUp}>
           <Text className="text-sm text-[#F97A4B] font-bold">
-            Create acount
+            {t('createAccount')}
           </Text>
         </TouchableOpacity>
       </View>
