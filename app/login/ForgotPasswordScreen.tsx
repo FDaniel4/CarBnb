@@ -1,44 +1,83 @@
 import React, { useState } from 'react';
 import {
-    Alert,
-    Image,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Image,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useColorScheme,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { sendPasswordResetEmail } from 'firebase/auth';
+// Usamos rutas relativas para consistencia
+import { auth } from '../../utils/firebaseConfig';
+
+import { useThemeColor } from '../../hooks/use-theme-color';
+
+// 1. IMPORTAR CONTEXTO
+import { useLanguage } from '../context/LanguageContext';
+
 const ForgotPasswordScreen: React.FC = () => {
   const router = useRouter();
+  
+  // 2. USAR HOOK
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState('');
 
+  const [loading, setLoading] = useState(false);
+
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const scheme = useColorScheme();
+  const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F3F3F3';
 
   const handleResetPassword = () => {
-    // TODO Aquí ira la lógica para ENVIAR EL EMAIL de reseteo
-    // con Firebase sendPasswordResetEmail
     if (!email) {
-      Alert.alert('Error', 'Please enter your email address.');
+      Alert.alert(t('error'), t('enterEmailError')); // <-- Traducido
       return;
     }
+    setLoading(true);
 
-    console.log('Sending password reset link to:', email);
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        setLoading(false);
+        Alert.alert(
+          t('checkEmailTitle'), // <-- Traducido
+          t('checkEmailMsg'),   // <-- Traducido
+          [
+            {
+              text: 'OK',
+              onPress: () => router.back(), // Regresa al login
+            },
+          ]
+        );
+      })
+      .catch((error) => {
+        setLoading(false);
+        console.log('Password Reset Error:', error.code);
 
-    Alert.alert(
-      'Check your email',
-      'If an account with that email exists, we have sent a link to reset your password.',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back(), 
-        },
-      ]
-    );
+        if (error.code === 'auth/invalid-email') {
+          Alert.alert(t('error'), t('enterValidEmailError')); // <-- Traducido
+        } else {
+          Alert.alert(
+            t('checkEmailTitle'), // <-- Traducido
+            t('checkEmailMsg'),   // <-- Traducido
+            [
+              {
+                text: 'OK',
+                onPress: () => router.back(),
+              },
+            ]
+          );
+        }
+      });
   };
 
   const handleGoBackToLogin = () => {
@@ -46,63 +85,77 @@ const ForgotPasswordScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white items-center justify-between pb-4">
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+    <SafeAreaView className="flex-1 items-center justify-between pb-4"
+    style={{backgroundColor: background}}>
+      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} 
+        backgroundColor={background} />
 
       {/* Contenedor principal para centrar el formulario */}
       <View className="w-full items-center">
         {/* ---- SECCIÓN LOGO ---- */}
         <View className="mt-[15%] mb-8">
           <Image
-            source={require('../../assets/images/Logo-blanco.jpg')} 
+            source={require('../../assets/images/Logo-trans.png')} 
             className="w-40 h-40" 
             resizeMode="contain"
           />
         </View>
 
         {/* ---- TÍTULO "Forgot Password" ---- */}
-        <Text className="text-3xl font-bold text-gray-800 mb-4">
-          Forgot Password
+        <Text className="text-3xl font-bold text-gray-800 mb-4"
+          style={{ color: textColor }}>
+          {t('forgotPasswordTitle')} {/* <-- Traducido */}
         </Text>
 
         {/* ---- TEXTO DESCRIPTIVO ---- */}
-        <Text className="text-sm text-gray-500 w-[85%] text-center mb-8">
-          Enter your email and we'll send you a link to reset your password.
+        <Text className="text-sm w-[85%] text-center mb-8"
+        style={{ color: textColor }}>
+          {t('forgotPasswordSubtitle')} {/* <-- Traducido */}
         </Text>
 
         {/* ---- SECCIÓN INPUT ---- */}
         <View className="w-[85%] space-y-4 mb-8">
           {/* Input Email */}
-          <View className="flex-row items-center bg-gray-100 p-3 rounded-3xl mb-2">
-            <Ionicons name="mail-outline" size={20} color="#888" />
+          <View
+            className="flex-row items-center p-3 rounded-3xl mb-2"
+            style={{ backgroundColor: inputBackground }} 
+          >
+            <Ionicons name="mail-outline" size={20} color={textColor} />
             <TextInput
-              placeholder="Email"
+              placeholder={t('email')} // <-- Traducido
               placeholderTextColor="#888"
               onChangeText={setEmail}
               value={email}
               keyboardType="email-address"
               autoCapitalize="none"
-              className="flex-1 ml-3 text-base text-black"
+              className="flex-1 ml-3 text-base"
+              style={{ color: textColor }}
+              editable={!loading}
             />
           </View>
         </View>
 
         {/* ---- BOTÓN "Send Reset Link" ---- */}
         <TouchableOpacity
-          className="bg-[#F97A4B] py-4 w-[85%] rounded-full mb-6 shadow-md shadow-black/20 items-center"
+          className={`bg-[#F97A4B] py-4 w-[85%] rounded-full mb-6 shadow-md shadow-black/20 items-center ${
+            loading ? 'bg-gray-400' : 'bg-[#F97A4B]'
+          }`}
           onPress={handleResetPassword}
+          disabled={loading}
         >
-          <Text className="text-white text-lg font-bold">Send Reset Link</Text>
+          <Text className="text-white text-lg font-bold">
+            {loading ? t('sendingLinkBtn') : t('sendLinkBtn')} {/* <-- Traducido */}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* ---- TEXTO "Back to Sign In" ---- */}
       <View className="flex-row justify-center items-center">
         <Text className="text-sm text-gray-400">
-          Remembered your password?{' '}
+          {t('rememberedPassword')} {/* <-- Traducido */}
         </Text>
         <TouchableOpacity onPress={handleGoBackToLogin}>
-          <Text className="text-sm text-[#F97A4B] font-bold">Sign in</Text>
+          <Text className="text-sm text-[#F97A4B] font-bold"> {t('signIn')}</Text> {/* <-- Traducido */}
         </TouchableOpacity>
       </View>
     </SafeAreaView>

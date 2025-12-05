@@ -1,108 +1,101 @@
 import {
-  Box,
-  Button,
-  ButtonIcon,
-  ButtonText,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  Heading,
-  HStack,
-  Icon,
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  Pressable, // Importamos Pressable para los selectores de fecha
-  Text,
-  VStack,
-} from '@gluestack-ui/themed';
+  Ionicons,
+  MaterialCommunityIcons,
+} from '@expo/vector-icons';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
-// La campanita de "Book now" es especial, la importamos desde expo-vector-icons
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Platform, ScrollView, StyleSheet } from 'react-native'; // <-- 1. IMPORTAMOS ScrollView
-// Importamos SafeAreaView para respetar los bordes del teléfono
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// Creamos un componente de Icono personalizado para esa campana
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
+
 const ReceptionBellIcon = (props: any) => (
-  <Icon
-    as={MaterialCommunityIcons}
-    name="bell-ring-outline"
-    {...props}
-  />
+  <MaterialCommunityIcons name="bell-ring-outline" {...props} />
 );
 
 export default function BookNowScreen() {
+  const router = useRouter(); 
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
+
   // ----- ESTADO PARA LOS MODALS (City, Type, etc.) -----
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalOptions, setModalOptions] = useState<string[]>([]);
-  const [selectedCity, setSelectedCity] = useState('City');
-  const [selectedTransmission, setSelectedTransmission] =
-    useState('Transmission'); // Usamos la palabra correcta en el estado
-  const [selectedCarType, setSelectedCarType] = useState('Type of car');
+  
+  // Inicializamos con el texto "default" traducido o una clave temporal que luego renderizamos
+  const [selectedCity, setSelectedCity] = useState(''); 
+  const [selectedTransmission, setSelectedTransmission] = useState('');
+  const [selectedCarType, setSelectedCarType] = useState('');
+  
+  const [modalAction, setModalAction] = useState<
+    ((value: string) => void) | null
+  >(null);
 
   // ----- ESTADO PARA EL DATEPICKER (From, To) -----
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
   const [fromDate, setFromDate] = useState(new Date());
   const [toDate, setToDate] = useState(new Date());
-  const [fromDateText, setFromDateText] = useState('From');
-  const [toDateText, setToDateText] = useState('To');
+  
+  // Usamos strings vacíos para saber si se ha seleccionado fecha o no
+  const [fromDateText, setFromDateText] = useState(''); 
+  const [toDateText, setToDateText] = useState('');
 
-  // --- Función para abrir el Modal de selección ---
   const openModal = (
     title: string,
     options: string[],
-    setter: (value: string) => void
+    setter: (value: string) => void 
   ) => {
     setModalTitle(title);
     setModalOptions(options);
+    setModalAction(() => setter); 
     setShowModal(true);
   };
 
-  // --- Función para abrir el DatePicker ---
   const openDatePicker = (pickerType: 'from' | 'to') => {
     setCurrentPicker(pickerType);
     setShowDatePicker(true);
   };
 
-  // --- Función que se llama cuando el DatePicker cambia ---
   const onChangeDate = (
     event: DateTimePickerEvent,
     selectedDate: Date | undefined
   ) => {
     const currentDate =
       selectedDate || (currentPicker === 'from' ? fromDate : toDate);
-    // En Android, ocultamos el picker después de seleccionar
     if (Platform.OS === 'android') {
       setShowDatePicker(false);
     }
 
     if (event.type === 'set') {
-      // Solo actualizamos si el usuario presionó "OK"
       if (currentPicker === 'from') {
         setFromDate(currentDate);
-        setFromDateText(currentDate.toLocaleDateString()); // Actualizamos el texto
+        setFromDateText(currentDate.toLocaleDateString());
       } else {
         setToDate(currentDate);
-        setToDateText(currentDate.toLocaleDateString()); // Actualizamos el texto
+        setToDateText(currentDate.toLocaleDateString());
       }
     } else {
-      // Si el usuario cancela (solo en Android)
       if (Platform.OS === 'android') {
         setShowDatePicker(false);
       }
     }
   };
 
-  // Botón "Hecho" para iOS (ya que el picker es un modal)
   const onDoneIOS = () => {
     setShowDatePicker(false);
     if (currentPicker === 'from') {
@@ -113,245 +106,196 @@ export default function BookNowScreen() {
   };
 
   return (
-    // Usamos SafeAreaView para evitar la barra de estado
-    <SafeAreaView style={styles.safeArea}>
-      {/* 2. Quitamos el padding (p="$5") del Box principal 
-         y mantenemos flex={1} para que ocupe toda la pantalla
-      */}
-      <Box flex={1} bg="$white">
-        {/* 3. Envolvemos el TÍTULO y el FORMULARIO en un ScrollView.
-          Le aplicamos el padding aquí.
-        */}
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* ----- 2. Sección del Título ----- */}
-          <HStack alignItems="center" space="sm" mb="$6" pt="$4">
-            <ReceptionBellIcon size="xl" color="$orange500" />
-            <Heading size="2xl" color="$text900">
-              Book now
-            </Heading>
-          </HStack>
+    <SafeAreaView className="flex-1 bg-white">
+      
+      <ScrollView
+        contentContainerClassName="p-5 pb-10"
+      >
+        <View className="flex-row items-center space-x-2 mb-6 pt-4">
+          <ReceptionBellIcon size={28} color="#F97A4B" />
+          <Text className="text-2xl font-bold text-gray-900">{t('bookNowTitle')}</Text>
+        </View>
 
-          {/* ----- 3. Formulario ----- */}
-          <VStack space="md">
-            {/* Selector de Ciudad (Redondeado) */}
-            <Button
-              size="lg"
-              borderColor="$orange200"
-              bg="$orange100"
-              justifyContent="space-between"
-              borderRadius="$lg" // <-- AJUSTE DE ESTILO
-              onPress={() =>
-                openModal(
-                  'Select City',
-                  ['New York', 'Los Angeles', 'Chicago', 'Miami'],
-                  setSelectedCity
-                )
-              }
+        <View className="space-y-4">
+          {/* Selector de Ciudad */}
+          <TouchableOpacity
+            className="flex-row justify-between items-center py-4 px-4 bg-orange-100 border border-orange-200 rounded-lg"
+            onPress={() =>
+              openModal(
+                t('selectCity'),
+                ['New York', 'Los Angeles', 'Chicago', 'Miami', 'Aguascalientes', 'CDMX'], 
+                setSelectedCity 
+              )
+            }
+          >
+            {/* Si no hay ciudad seleccionada, muestra "City" (traducido), si no, la ciudad */}
+            <Text className="text-gray-700 text-base">
+                {selectedCity || t('cityDefault')}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+          </TouchableOpacity>
+
+          {/* Fechas */}
+          <View>
+            <Text className="text-gray-500 mb-2">{t('dateLabel')}</Text>
+            <TouchableOpacity
+              onPress={() => openDatePicker('from')}
+              className="flex-row justify-between items-center border-b border-gray-300 py-3 mb-3"
             >
-              <ButtonText color="$text700">{selectedCity}</ButtonText>
-              <ButtonIcon as={ChevronRightIcon} color="$text700" />
-            </Button>
-
-            {/* Selectores de Fecha (Estilo de línea) */}
-            <Box>
-              <Text color="$gray500" mb="$2">
-                Date
-              </Text>
-              {/* Botón "Desde" */}
-              <Pressable
-                onPress={() => openDatePicker('from')}
-                sx={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottomWidth: 1,
-                  borderColor: '$coolGray300',
-                  py: '$3', // Padding vertical
-                }}
-                mb="$3"
+              <Text
+                className={`text-lg ${
+                  !fromDateText ? 'text-gray-500' : 'text-gray-800'
+                }`}
               >
-                <Text
-                  fontSize="$lg"
-                  color={fromDateText === 'From' ? '$gray500' : '$text800'}
-                >
-                  {fromDateText}
-                </Text>
-                <Icon as={ChevronDownIcon} color="$text700" />
-              </Pressable>
-
-              <Text color="$gray500" mb="$2">
-                Date
+                {fromDateText || t('fromLabel')}
               </Text>
-              {/* Botón "Hasta" */}
-              <Pressable
-                onPress={() => openDatePicker('to')}
-                sx={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottomWidth: 1,
-                  borderColor: '$coolGray300',
-                  py: '$3', // Padding vertical
-                }}
+              <Ionicons name="chevron-down" size={20} color="#6b7280" />
+            </TouchableOpacity>
+
+            <Text className="text-gray-500 mb-2">{t('dateLabel')}</Text>
+            <TouchableOpacity
+              onPress={() => openDatePicker('to')}
+              className="flex-row justify-between items-center border-b border-gray-300 py-3"
+            >
+              <Text
+                className={`text-lg ${
+                  !toDateText ? 'text-gray-500' : 'text-gray-800'
+                }`}
               >
-                <Text
-                  fontSize="$lg"
-                  color={toDateText === 'To' ? '$gray500' : '$text800'}
-                >
-                  {toDateText}
-                </Text>
-                <Icon as={ChevronDownIcon} color="$text700" />
-              </Pressable>
-            </Box>
+                {toDateText || t('toLabel')}
+              </Text>
+              <Ionicons name="chevron-down" size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
 
-            {/* Selector de Transmisión (Redondeado) */}
-            <Button
-              size="lg"
-              borderColor="$orange200"
-              bg="$orange100"
-              justifyContent="space-between"
-              borderRadius="$lg" // <-- AJUSTE DE ESTILO
-              onPress={() =>
-                openModal(
-                  'Select Transmission',
-                  ['Automatic', 'Manual'],
-                  setSelectedTransmission
-                )
-              }
-            >
-              {/* El typo "Transmition" de la imagen se corrige aquí */}
-              <ButtonText color="$text700">{selectedTransmission}</ButtonText>
-              <ButtonIcon as={ChevronRightIcon} color="$text700" />
-            </Button>
+          {/* Selector de Transmisión */}
+          <TouchableOpacity
+            className="flex-row justify-between items-center py-4 px-4 bg-orange-100 border border-orange-200 rounded-lg"
+            onPress={() =>
+              openModal(
+                t('selectTransmission'),
+                [t('automatic'), t('manual')],
+                setSelectedTransmission
+              )
+            }
+          >
+            <Text className="text-gray-700 text-base">
+              {selectedTransmission || t('transmissionDefault')}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+          </TouchableOpacity>
 
-            {/* Selector de Tipo de Auto (Redondeado) */}
-            <Button
-              size="lg"
-              borderColor="$orange200"
-              bg="$orange100"
-              justifyContent="space-between"
-              borderRadius="$lg" // <-- AJUSTE DE ESTILO
-              onPress={() =>
-                openModal(
-                  'Select Car Type',
-                  ['Sedan', 'SUV', 'Truck', 'Sport'],
-                  setSelectedCarType
-                )
-              }
-            >
-              <ButtonText color="$text700">{selectedCarType}</ButtonText>
-              <ButtonIcon as={ChevronRightIcon} color="$text700" />
-            </Button>
+          {/* Selector de Tipo de Auto */}
+          <TouchableOpacity
+            className="flex-row justify-between items-center py-4 px-4 bg-orange-100 border border-orange-200 rounded-lg"
+            onPress={() =>
+              openModal(
+                t('selectCarType'),
+                ['Sedan', 'SUV', 'Truck', 'Sport'],
+                setSelectedCarType
+              )
+            }
+          >
+            <Text className="text-gray-700 text-base">
+                {selectedCarType || t('carTypeDefault')}
+            </Text>
+            <Ionicons name="chevron-forward" size={20} color="#6b7280" />
+          </TouchableOpacity>
 
-            {/* Botón de Búsqueda (Redondeado) */}
-            <Button
-              size="lg"
-              bg="$orange500"
-              borderRadius="$lg" // <-- AJUSTE DE ESTILO
-              onPress={() => {
-                console.log('Buscando con:', {
+          {/* Botón de Búsqueda */}
+          <TouchableOpacity
+            className="py-4 bg-orange-500 rounded-lg mt-4"
+            onPress={() => {
+              console.log('Buscando con:', {
+                city: selectedCity,
+                from: fromDateText,
+                to: toDateText,
+                transmission: selectedTransmission,
+                type: selectedCarType,
+              });
+              // Navegar a la pantalla de resultados
+              router.push({
+                pathname: '/drawer/searchResults',
+                params: {
                   city: selectedCity,
                   from: fromDateText,
                   to: toDateText,
-                  transmission: selectedTransmission,
-                  type: selectedCarType,
-                });
-                // TODO: Navegar a la pantalla de resultados de búsqueda
-              }}
-              mt="$4"
-            >
-              <ButtonText>SEARCH</ButtonText>
-            </Button>
-          </VStack>
-        </ScrollView>
+                }
+              });
+            }}
+          >
+            <Text className="text-white text-base font-bold text-center">
+              {t('searchBtn')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
-        {/* 4. DEJAMOS LOS MODALS Y EL DATEPICKER *FUERA* DEL SCROLLVIEW
-          para que floten por encima correctamente.
-        */}
-
-        {/* ----- Modal Genérico (oculto hasta que se llama) ----- */}
-        <Modal
-          isOpen={showModal}
-          onClose={() => {
-            setShowModal(false);
-          }}
+      {/* Modal General */}
+      <Modal
+        transparent={true}
+        visible={showModal}
+        animationType="fade"
+        onRequestClose={() => setShowModal(false)}
+      >
+        <Pressable
+          className="flex-1 justify-center items-center bg-black/50 p-5"
+          onPress={() => setShowModal(false)}
         >
-          <ModalBackdrop />
-          {/* AQUÍ COMIENZAN LAS CORRECCIONES DE ESTILO */}
-          <ModalContent bg="$orange100" borderRadius="$lg">
-            <ModalHeader borderBottomWidth={0}>
-              <Heading size="lg" color="$orange500">
+          <Pressable className="w-full bg-orange-100 rounded-lg">
+            <View className="flex-row justify-between items-center p-4 border-b border-orange-200">
+              <Text className="text-lg font-bold text-orange-500">
                 {modalTitle}
-              </Heading>
-              <ModalCloseButton>
-                <Icon as={CloseIcon} color="$orange500" />
-              </ModalCloseButton>
-            </ModalHeader>
-            <ModalBody>
+              </Text>
+              <TouchableOpacity onPress={() => setShowModal(false)}>
+                <Ionicons name="close" size={24} color="#F97A4B" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="p-4">
               {modalOptions.map((option) => (
-                <Pressable
+                <TouchableOpacity
                   key={option}
+                  className="py-3"
                   onPress={() => {
-                    // Aquí actualizamos el estado correspondiente
-                    if (modalTitle === 'Select City') setSelectedCity(option);
-                    if (modalTitle === 'Select Transmission')
-                      setSelectedTransmission(option);
-                    if (modalTitle === 'Select Car Type')
-                      setSelectedCarType(option);
+                    if (modalAction) {
+                      modalAction(option);
+                    }
                     setShowModal(false);
                   }}
-                  sx={{
-                    p: '$3',
-                    borderBottomWidth: 1,
-                    borderColor: '$orange200', // <-- Borde naranja
-                    ':active': {
-                      bg: '$orange200', // <-- Color al presionar
-                    },
-                  }}
                 >
-                  <Text color="$text700">{option}</Text>
-                </Pressable>
+                  <Text className="text-gray-700 text-base">{option}</Text>
+                </TouchableOpacity>
               ))}
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
-        {/* ----- DatePicker (oculto hasta que se llama) ----- */}
-        {showDatePicker && (
-          <DateTimePicker
-            testID="dateTimePicker"
-            value={currentPicker === 'from' ? fromDate : toDate}
-            mode="date"
-            is24Hour={true}
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-            onChange={onChangeDate}
-          />
-        )}
-        {/* Botones "Cancelar" y "Hecho" solo para iOS */}
-        {showDatePicker && Platform.OS === 'ios' && (
-          <HStack justifyContent="space-around" p="$2">
-            <Button variant="outline" onPress={() => setShowDatePicker(false)}>
-              <ButtonText>Cancel</ButtonText>
-            </Button>
-            <Button onPress={onDoneIOS}>
-              <ButtonText>Done</ButtonText>
-            </Button>
-          </HStack>
-        )}
-      </Box>
+      {/* ----- DatePicker (oculto hasta que se llama) ----- */}
+      {showDatePicker && (
+        <DateTimePicker
+          testID="dateTimePicker"
+          value={currentPicker === 'from' ? fromDate : toDate}
+          mode="date"
+          is24Hour={true}
+          display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+          onChange={onChangeDate}
+        />
+      )}
+      {showDatePicker && Platform.OS === 'ios' && (
+        <View className="flex-row justify-around p-2">
+          <TouchableOpacity
+            className="py-2 px-4"
+            onPress={() => setShowDatePicker(false)}
+          >
+            <Text className="text-blue-500 text-base">{t('cancel')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity className="py-2 px-4" onPress={onDoneIOS}>
+            <Text className="text-blue-500 text-base font-bold">Done</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
-
-// Agregamos estilos para el SafeAreaView
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  // 5. AÑADIMOS UN ESTILO PARA EL PADDING DEL SCROLLVIEW
-  scrollContainer: {
-    padding: 20, // (Equivalente a p="$5" de Gluestack)
-    paddingBottom: 40, // Espacio extra al final
-  },
-});

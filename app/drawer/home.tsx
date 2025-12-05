@@ -3,462 +3,427 @@ import {
   Ionicons,
   MaterialCommunityIcons,
 } from '@expo/vector-icons';
-import {
-  Box,
-  Button,
-  ButtonIcon,
-  ButtonText,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  CloseIcon,
-  // Importamos 'Image' de Gluestack, aunque usaremos la nativa para el carrusel
-  Image as GluestackImage,
-  Heading,
-  HStack,
-  Icon,
-  Modal,
-  ModalBackdrop,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalHeader,
-  Pressable,
-  SearchIcon,
-  Switch,
-  Text,
-  VStack,
-} from '@gluestack-ui/themed';
 import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useColorScheme as useNativeWindColorScheme } from 'nativewind';
+import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Modal,
   Platform,
+  Pressable,
   Image as RNImage,
   ScrollView,
-  StyleSheet,
+  Switch,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-// --- Iconos Personalizados ---
-const CarIcon = (props: any) => (
-  <Icon as={FontAwesome} name="car" {...props} />
-);
-const UserIcon = (props: any) => (
-  <Icon as={FontAwesome} name="user" {...props} />
-);
-const AutoIcon = (props: any) => (
-  <Icon as={MaterialCommunityIcons} name="cogs" {...props} /> // Icono para Automático
-);
-const ManualIcon = (props: any) => (
-  <Icon as={MaterialCommunityIcons} name="cog-outline" {...props} /> // Icono para Manual
-);
-const CalendarIcon = (props: any) => (
-  <Icon as={Ionicons} name="calendar-outline" {...props} />
-);
+// --- Imports con rutas relativas ---
+import { collection, limit, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { useThemeColor } from '../../hooks/use-theme-color';
+import { auth, db } from '../../utils/firebaseConfig';
 
-// --- Datos de los Autos (ACTUALIZADOS) ---
-const featuredCars = [
-  {
-    name: 'Kia Soul',
-    style: '6 Puertas',
-    image: require('@/assets/images/Autos/aveo_5door_lrg.jpg'), // CAMBIA ESTO por 'kia_soul.jpg' si la tienes
-    price: '899',
-    passengers: 4,
-    transmission: 'Auto', // <-- VALOR CORTO
-    brandLogo:
-      'https://logodownload.org/wp-content/uploads/2017/02/mex-rent-a-car-logo-1.png', // Logo de Mex
-  },
-  {
-    name: 'Ford Mustang',
-    color: 'Rojo',
-    style: '2 Puertas',
-    image: require('@/assets/images/Autos/jetta_lrg.jpg'), // CAMBIA ESTO por 'ford_mustang.jpg' si la tienes
-    price: '639',
-    passengers: 2,
-    transmission: 'Auto', // <-- VALOR CORTO
-    brandLogo:
-      'https://companieslogo.com/img/orig/CAR-c80c6819.png?t=1659337581', // Logo de Budget
-  },
-  {
-    name: 'Volkswagen Vento',
-    style: '4 Puertas',
-    image: require('@/assets/images/Autos/vento_lrg.jpg'),
-    price: '499',
-    passengers: 4,
-    transmission: 'Manual', // <-- VALOR CORTO
-    brandLogo:
-      'https://upload.wikimedia.org/wikipedia/commons/3/30/Bob_Finance_logo.png', // Logo de Bob
-  },
-];
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../context/LanguageContext';
 
-// --- Componente de Tarjeta de Auto (ACTUALIZADO) ---
-const CarCard = ({ car }: { car: (typeof featuredCars)[0] }) => {
-  const router = useRouter(); 
+// --- Tipos ---
+export type Car = {
+  id: string;
+  name: string;
+  city: string; 
+  style: string;
+  price: string;
+  passengers: number;
+  transmission: string;
+  image: string;
+  description?: string;
+  ownerId: string;
+};
+
+// --- Iconos ---
+const UserIcon = ({ color }: { color: string }) => <FontAwesome name="user" size={14} color={color} />;
+const AutoIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cogs" size={14} color={color} />;
+const ManualIcon = ({ color }: { color: string }) => <MaterialCommunityIcons name="cog-outline" size={14} color={color} />;
+
+// --- HELPER PARA URLS (Agregado para el Home también) ---
+const getFixedUrl = (urlParam: string | undefined) => {
+    if (!urlParam) return "";
+    let url = urlParam;
+
+    if (url.includes("firebasestorage.googleapis.com") && url.includes("/o/")) {
+        const parts = url.split("/o/");
+        if (parts.length >= 2) {
+            const base = parts[0];
+            const rest = parts[1];
+            const [path, query] = rest.split("?");
+            
+            if (path.includes("/")) {
+                return `${base}/o/${encodeURIComponent(path)}?${query}`;
+            }
+        }
+    }
+    // Fix espacios
+    return url.replace(/ /g, '%20');
+};
+
+const CarCard = ({
+  car,
+  textColor,
+  cardBackground,
+  searchDates // Recibimos las fechas seleccionadas
+}: {
+  car: Car;
+  textColor: string;
+  cardBackground: string;
+  searchDates?: { start: string; end: string }
+}) => {
+  const router = useRouter();
+  const { t } = useLanguage();
+
+  // Usamos el helper para la imagen
+  const fixedImage = getFixedUrl(car.image);
 
   return (
-    <Box
-      bg="$background0"
-      borderRadius="$lg"
-      overflow="hidden"
-      width={220} // Ancho fijo para el carrusel
-      mr="$4" // Margen a la derecha
+    <View
+      className="rounded-lg overflow-hidden w-64 mr-4 border border-gray-200 shadow-sm"
+      style={{ backgroundColor: cardBackground }}
     >
-      {/* Usamos RNImage y resizeMode="contain" */}
-      <Box w="$full" h={120} bg="$background100">
+      <View className="w-full h-40 bg-gray-100 relative">
         <RNImage
-          source={car.image}
+          source={{ uri: fixedImage }}
           style={{ width: '100%', height: '100%' }}
-          resizeMode="contain" // <-- Arreglo de imagen
+          resizeMode="cover"
         />
-      </Box>
-      <VStack p="$3" space="xs">
-        <HStack justifyContent="space-between" alignItems="center">
-          <Box>
-            <Heading size="sm" color="$text900">
-              {car.name}
-            </Heading>
-            <Text size="xs" color="$text900">
-              {car.style}
-            </Text>
-          </Box>
-          {/* Usamos GluestackImage para URLs */}
-          <GluestackImage
-            source={{ uri: car.brandLogo }}
-            alt="Brand Logo"
-            w={40}
-            h={20}
-            resizeMode="contain"
-          />
-        </HStack>
-        <HStack alignItems="flex-end" space="xs">
-          <Text color="$text500" size="xs">
-            Desde
-          </Text>
-          <Heading size="md" color="$orange500">
-            ${car.price}
-          </Heading>
-          <Text color="$text500" size="xs">
-            /día
-          </Text>
-        </HStack>
+        {/* Badge de Ciudad */}
+        <View className="absolute bottom-2 right-2 bg-black/60 px-2 py-1 rounded-md">
+            <Text className="text-white text-[10px] font-bold">{car.city}</Text>
+        </View>
+      </View>
 
-        {/* ----- ¡AQUÍ ESTÁ LA CORRECCIÓN DE ICONOS! (Puertas eliminado) ----- */}
-        <HStack space="sm" alignItems="center" mt="$1">
-          {/* Pasajeros */}
-          <HStack alignItems="center" space="xs">
-            <UserIcon size="sm" color="$text800" />
-            <Text size="sm" color="$text800">
-              {car.passengers}
+      <View className="p-3 space-y-2">
+        <View>
+          <Text className="text-base font-bold" numberOfLines={1} style={{ color: textColor }}>
+            {car.name}
+          </Text>
+          <Text className="text-xs opacity-70" style={{ color: textColor }}>
+            {car.style}
+          </Text>
+        </View>
+        
+        <View className="flex-row items-end justify-between">
+          <View>
+              <Text className="text-xs text-gray-500">{t('fromPriceLabel')}</Text>
+              <Text className="text-lg font-bold text-orange-500">
+                ${car.price}<Text className="text-xs font-normal text-gray-500">{t('perDay')}</Text>
+              </Text>
+          </View>
+        </View>
+
+        <View className="flex-row space-x-4 pt-2 border-t border-gray-100">
+          <View className="flex-row items-center space-x-1">
+            <UserIcon color={textColor} />
+            <Text className="text-xs" style={{ color: textColor }}>{car.passengers}</Text>
+          </View>
+          <View className="flex-row items-center space-x-1">
+            {car.transmission === 'Auto' ? <AutoIcon color={textColor} /> : <ManualIcon color={textColor} />}
+            <Text className="text-xs" style={{ color: textColor }}>
+                {car.transmission === 'Auto' ? t('automatic') : (car.transmission === 'Manual' ? t('manual') : car.transmission)}
             </Text>
-          </HStack>
-          {/* Puertas (ELIMINADO) */}
-          {/* Transmisión (Condicional) */}
-          <HStack alignItems="center" space="xs">
-            {car.transmission === 'Auto' ? (
-              <AutoIcon size="sm" color="$text800" />
-            ) : (
-              <ManualIcon size="sm" color="$text800" />
-            )}
-            <Text size="sm" color="$text800">
-              {car.transmission}
-            </Text>
-          </HStack>
-        </HStack>
-      </VStack>
-      <Button
-        bg="$orange500"
-        borderRadius="$none"
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        className="bg-orange-500 py-3 items-center"
         onPress={() => {
-          // --- 3. ¡ESTA ES LA LÓGICA DE NAVEGACIÓN! ---
           router.push({
-            pathname: '/drawer/carDetail', // <-- La nueva pantalla
+            pathname: '/drawer/carDetail',
             params: {
-              // Pasamos todos los datos del auto
+              id: car.id,
               name: car.name,
               style: car.style,
               price: car.price,
-              passengers: car.passengers,
+              passengers: car.passengers.toString(),
               transmission: car.transmission,
+              image: fixedImage, // Pasamos la imagen ya arreglada
+              description: car.description || '',
+              ownerId: car.ownerId,
+              // PASAMOS LAS FECHAS DEL HOME AL DETALLE
+              startDate: searchDates?.start,
+              endDate: searchDates?.end
             },
           });
-          // ------------------------------------------
         }}
       >
-        <ButtonText>Select</ButtonText>
-      </Button>
-    </Box>
+        <Text className="text-white font-bold uppercase text-xs">{t('select')}</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
-// --- Pantalla Principal de Home ---
 export default function HomeScreen() {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const router = useRouter();
+  
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
 
-  // ----- INICIO DE LÓGICA PORTADA DE 'booknow.tsx' -----
+  const { colorScheme, setColorScheme } = useNativeWindColorScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  const scheme = useColorScheme();
+  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
+  const inputBackground = scheme === 'dark' ? '#2C2C2E' : '#F9FAFB';
+
+  // --- Estado de Datos ---
+  const [recentCars, setRecentCars] = useState<Car[]>([]);
+  const [availableCars, setAvailableCars] = useState<Car[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // --- Estados de Filtros ---
   const [showModal, setShowModal] = useState(false);
-  const [modalOptions, setModalOptions] = useState<string[]>([]);
-  const [selectedCity, setSelectedCity] = useState('City');
-
+  const [selectedCity, setSelectedCity] = useState('Aguascalientes');
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPicker, setCurrentPicker] = useState<'from' | 'to'>('from');
+  
+  // Fechas iniciales: Hoy y Mañana
   const [fromDate, setFromDate] = useState(new Date());
-  const [toDate, setToDate] = useState(new Date());
-  const [fromDateText, setFromDateText] = useState('From');
-  const [toDateText, setToDateText] = useState('To');
-
-  // --- Función para abrir el Modal de selección (simplificado) ---
-  const openModal = (options: string[]) => {
-    setModalOptions(options);
-    setShowModal(true);
+  const [toDate, setToDate] = useState(() => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    return tomorrow;
+  });
+  
+  // Objeto con fechas formateadas para pasar a las tarjetas
+  const currentSearchDates = {
+      start: fromDate.toISOString().split('T')[0],
+      end: toDate.toISOString().split('T')[0]
   };
 
-  // --- Función para abrir el DatePicker ---
-  const openDatePicker = (pickerType: 'from' | 'to') => {
-    setCurrentPicker(pickerType);
+  // --- Cargar Autos de Firestore y Filtrar ---
+  useEffect(() => {
+    // Traemos una buena cantidad de autos para tener variedad
+    const q = query(collection(db, 'cars'), orderBy('createdAt', 'desc'), limit(15));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const allCars: Car[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      } as Car));
+
+      // FILTRO: Excluir autos que sean míos
+      const currentUserId = auth.currentUser?.uid;
+      const othersCars = allCars.filter(car => car.ownerId !== currentUserId);
+
+      setRecentCars(othersCars.slice(0, 5)); // Los 5 más recientes ajenos
+      setAvailableCars(othersCars); // Todos los ajenos disponibles
+
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const formatDate = (date: Date) => date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
+  
+  const openDatePicker = (type: 'from' | 'to') => {
+    setCurrentPicker(type);
     setShowDatePicker(true);
   };
 
-  // --- Función que se llama cuando el DatePicker cambia ---
-  const onChangeDate = (
-    event: DateTimePickerEvent,
-    selectedDate: Date | undefined
-  ) => {
-    const currentDate =
-      selectedDate || (currentPicker === 'from' ? fromDate : toDate);
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
-    }
-
-    if (event.type === 'set') {
+  const onChangeDate = (event: DateTimePickerEvent, date?: Date) => {
+    if (Platform.OS === 'android') setShowDatePicker(false);
+    if (event.type === 'set' && date) {
       if (currentPicker === 'from') {
-        setFromDate(currentDate);
-        setFromDateText(currentDate.toLocaleDateString());
+          setFromDate(date);
+          // Si la fecha "desde" es después de "hasta", empujar "hasta"
+          if (date > toDate) {
+              const nextDay = new Date(date);
+              nextDay.setDate(date.getDate() + 1);
+              setToDate(nextDay);
+          }
       } else {
-        setToDate(currentDate);
-        setToDateText(currentDate.toLocaleDateString());
-      }
-    } else {
-      if (Platform.OS === 'android') {
-        setShowDatePicker(false);
+          setToDate(date);
       }
     }
   };
-
-  // Botón "Hecho" para iOS
-  const onDoneIOS = () => {
-    setShowDatePicker(false);
-    if (currentPicker === 'from') {
-      setFromDateText(fromDate.toLocaleDateString());
-    } else {
-      setToDateText(toDate.toLocaleDateString());
-    }
-  };
-  // ----- FIN DE LÓGICA PORTADA -----
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Usamos ScrollView para toda la pantalla */}
-      <ScrollView nestedScrollEnabled={true}>
-        <Box bg="$white" p="$1">
-          {/* ----- 1. Featured ----- */}
-          <HStack justifyContent="space-between" alignItems="center" mb="$4">
-            <Heading size="2xl" color="$text900">
-              Featured
-            </Heading>
-            <HStack alignItems="center" space="sm">
-              <Text size="xs" color="$text900">
-                DARK MODE
-              </Text>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
+      <ScrollView nestedScrollEnabled>
+        <View className="p-5 pb-20">
+          
+          {/* Header */}
+          <View className="flex-row justify-between items-center mb-6">
+            <View>
+              <Text className="text-3xl font-bold" style={{ color: textColor }}>{t('exploreTitle')}</Text>
+              <Text className="text-orange-500 font-bold">{t('exploreSubtitle')}</Text>
+            </View>
+            <View className="items-end">
+              <Text className="text-[10px] uppercase font-bold text-gray-400 mb-1">{t('modeLabel')} {colorScheme}</Text>
               <Switch
-                value={isDarkMode}
-                onToggle={() => setIsDarkMode(!isDarkMode)}
+                value={colorScheme === 'dark'}
+                onValueChange={(val) => setColorScheme(val ? 'dark' : 'light')}
+                trackColor={{ false: '#e5e7eb', true: '#fdba74' }}
+                thumbColor={colorScheme === 'dark' ? '#f97316' : '#f4f4f5'}
               />
-            </HStack>
-          </HStack>
+            </View>
+          </View>
 
-          {/* ----- 2. Carrusel Horizontal ----- */}
-          <ScrollView
-            horizontal={true}
-            showsHorizontalScrollIndicator={false}
-            style={{ marginBottom: 24 }}
-          >
-            {featuredCars.map((car) => (
-              <CarCard key={car.name} car={car} />
-            ))}
-          </ScrollView>
+          {/* Carrusel 1: Recién Agregados */}
+          <View className="mb-8">
+              <Text className="text-lg font-bold mb-4" style={{ color: textColor }}>{t('recentlyAdded')}</Text>
+              {loading ? (
+                <ActivityIndicator size="large" color="#f97316" />
+              ) : recentCars.length === 0 ? (
+                <Text className="text-gray-400 italic">{t('noRecentCars')}</Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+                  {recentCars.map(car => (
+                    <CarCard 
+                        key={car.id} 
+                        car={car} 
+                        textColor={textColor} 
+                        cardBackground={cardBackground}
+                        searchDates={currentSearchDates} // Pasamos las fechas
+                    />
+                  ))}
+                </ScrollView>
+              )}
+          </View>
 
-          {/* ----- 3. Formulario de Búsqueda Rápida (CON FUNCIONALIDAD) ----- */}
-          <VStack space="md">
-            {/* Botón City */}
-            <Button
-              size="lg"
-              variant="outline"
-              borderColor="$coolGray300"
-              bg="$background0"
-              justifyContent="space-between"
-              borderRadius="$lg"
-              onPress={() =>
-                openModal(['New York', 'Los Angeles', 'Chicago', 'Miami'])
-              } // <--- ACCIÓN
+           {/* Carrusel 2: Autos Disponibles */}
+           <View className="mb-8">
+             <View className="flex-row justify-between items-end mb-4">
+                <Text className="text-lg font-bold" style={{ color: textColor }}>{t('allCars')}</Text>
+                <TouchableOpacity onPress={() => router.push('/drawer/searchResults')}>
+                    <Text className="text-orange-500 text-xs font-bold">{t('viewMore')}</Text>
+                </TouchableOpacity>
+             </View>
+             
+             {loading ? (
+               <ActivityIndicator size="small" color="#f97316" />
+             ) : availableCars.length === 0 ? (
+               <Text className="text-gray-400 italic">{t('noAvailableCars')}</Text>
+             ) : (
+               <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+                 {[...availableCars].reverse().map(car => (
+                   <CarCard 
+                        key={`avail-${car.id}`} 
+                        car={car} 
+                        textColor={textColor} 
+                        cardBackground={cardBackground} 
+                        searchDates={currentSearchDates} // Pasamos las fechas
+                   />
+                 ))}
+               </ScrollView>
+             )}
+          </View>
+
+          {/* Buscador */}
+          <View className="rounded-2xl p-5 space-y-4 shadow-sm" style={{ backgroundColor: cardBackground }}>
+            <Text className="font-bold text-gray-400 uppercase text-xs">{t('searchByDateLocation')}</Text>
+            
+            {/* Ciudad */}
+            <TouchableOpacity 
+              onPress={() => setShowModal(true)}
+              className="flex-row items-center p-4 rounded-xl border border-gray-100"
+              style={{ backgroundColor: inputBackground }}
             >
-              <ButtonText
-                color={selectedCity === 'City' ? '$text500' : '$text800'}
+              <Ionicons name="location-sharp" size={20} color="#f97316" style={{ marginRight: 12 }} />
+              <View className="flex-1">
+                <Text className="text-xs text-gray-400">{t('locationLabel')}</Text>
+                <Text className="font-bold text-base" style={{ color: textColor }}>{selectedCity}</Text>
+              </View>
+              <Ionicons name="chevron-down" size={20} color="gray" />
+            </TouchableOpacity>
+
+            {/* Fechas */}
+            <View className="flex-row space-x-3">
+              <TouchableOpacity 
+                onPress={() => openDatePicker('from')}
+                className="flex-1 flex-row items-center p-3 rounded-xl border border-gray-100"
+                style={{ backgroundColor: inputBackground }}
               >
-                {selectedCity}
-              </ButtonText>
-              <ButtonIcon as={ChevronDownIcon} color="$text700" />
-            </Button>
+                <Ionicons name="calendar" size={18} color="#f97316" style={{ marginRight: 8 }} />
+                <View>
+                    <Text className="text-xs text-gray-400">{t('fromLabel')}</Text>
+                    <Text className="font-bold" style={{ color: textColor }}>{formatDate(fromDate)}</Text>
+                </View>
+              </TouchableOpacity>
 
-            {/* Botones From/To */}
-            <HStack
-              space="md"
-              alignItems="center"
-              bg="$background0"
-              p="$3"
-              borderRadius="$lg"
-              borderWidth={1}
-              borderColor="$coolGray300"
-            >
-              <CalendarIcon size="xl" color="$orange500" />
-              <VStack flex={1}>
-                <Pressable
-                  onPress={() => openDatePicker('from')} // <--- ACCIÓN
-                  sx={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    w: '$full',
-                  }}
-                >
-                  <Text
-                    size="lg"
-                    color={fromDateText === 'From' ? '$text500' : '$text800'}
-                  >
-                    {fromDateText}
-                  </Text>
-                  <Icon as={ChevronRightIcon} color="$text700" />
-                </Pressable>
+              <TouchableOpacity 
+                onPress={() => openDatePicker('to')}
+                className="flex-1 flex-row items-center p-3 rounded-xl border border-gray-100"
+                style={{ backgroundColor: inputBackground }}
+              >
+                <Ionicons name="calendar" size={18} color="#f97316" style={{ marginRight: 8 }} />
+                <View>
+                    <Text className="text-xs text-gray-400">{t('toLabel')}</Text>
+                    <Text className="font-bold" style={{ color: textColor }}>{formatDate(toDate)}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
 
-                <Box h="$3" />
-
-                <Pressable
-                  onPress={() => openDatePicker('to')} // <--- ACCIÓN
-                  sx={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    w: '$full',
-                  }}
-                >
-                  <Text
-                    size="lg"
-                    color={toDateText === 'To' ? '$text500' : '$text800'}
-                  >
-                    {toDateText}
-                  </Text>
-                  <Icon as={ChevronRightIcon} color="$text700" />
-                </Pressable>
-              </VStack>
-            </HStack>
-
-            {/* Botón Search */}
-            <Button
-              size="lg"
-              bg="$orange500"
-              borderRadius="$lg"
+            {/* Botón Buscar */}
+            <TouchableOpacity 
+              className="bg-orange-500 py-4 rounded-xl items-center mt-2 shadow-orange-200 shadow-md"
               onPress={() => {
-                // Navega a 'booknow' pasando los filtros
                 router.push({
                   pathname: '/drawer/searchResults',
-                  params: {
+                  params: { 
                     city: selectedCity,
-                    from: fromDateText,
-                    to: toDateText,
-                  },
+                    from: fromDate.toISOString(),
+                    to: toDate.toISOString()
+                  }
                 });
               }}
-              mt="$2"
             >
-              <ButtonIcon as={SearchIcon} mr="$2" />
-              <ButtonText>Search</ButtonText>
-            </Button>
-          </VStack>
-        </Box>
+              <Text className="text-white font-bold text-lg">{t('searchCarsBtn')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
 
-      {/* ----- JSX PORTADO DE 'booknow.tsx' ----- */}
-      {/* ----- Modal Genérico (oculto hasta que se llama) ----- */}
-      <Modal
-        isOpen={showModal}
-        onClose={() => {
-          setShowModal(false);
-        }}
-      >
-        <ModalBackdrop />
-        <ModalContent bg="$orange100" borderRadius="$lg">
-          <ModalHeader borderBottomWidth={0}>
-            <Heading size="lg" color="$orange500">
-              Select City
-            </Heading>
-            <ModalCloseButton>
-              <Icon as={CloseIcon} color="$orange500" />
-            </ModalCloseButton>
-          </ModalHeader>
-          <ModalBody>
-            {modalOptions.map((option) => (
-              <Pressable
-                key={option}
-                onPress={() => {
-                  setSelectedCity(option); // <-- Actualiza la ciudad
-                  setShowModal(false);
-                }}
-                sx={{
-                  p: '$3',
-                  borderBottomWidth: 1,
-                  borderColor: '$orange200',
-                  ':active': {
-                    bg: '$orange200',
-                  },
-                }}
+      {/* Modal Ciudades */}
+      <Modal visible={showModal} transparent animationType="fade">
+        <Pressable className="flex-1 bg-black/50 justify-center p-5" onPress={() => setShowModal(false)}>
+          <View className="bg-white rounded-2xl overflow-hidden">
+            <View className="p-4 border-b border-gray-100 flex-row justify-between items-center">
+              <Text className="font-bold text-lg">{t('selectCityTitle')}</Text>
+              <TouchableOpacity onPress={() => setShowModal(false)}>
+                <Ionicons name="close" size={24} color="black" />
+              </TouchableOpacity>
+            </View>
+            {['Aguascalientes', 'CDMX', 'Guadalajara', 'Monterrey', 'Cancún', 'Puebla'].map(city => (
+              <TouchableOpacity 
+                key={city} 
+                className="p-4 border-b border-gray-50 active:bg-orange-50"
+                onPress={() => { setSelectedCity(city); setShowModal(false); }}
               >
-                <Text color="$text700">{option}</Text>
-              </Pressable>
+                <Text className={`text-base ${selectedCity === city ? 'text-orange-500 font-bold' : 'text-gray-700'}`}>
+                  {city}
+                </Text>
+              </TouchableOpacity>
             ))}
-          </ModalBody>
-        </ModalContent>
+          </View>
+        </Pressable>
       </Modal>
 
-      {/* ----- DatePicker (oculto hasta que se llama) ----- */}
+      {/* Date Picker */}
       {showDatePicker && (
         <DateTimePicker
-          testID="dateTimePicker"
           value={currentPicker === 'from' ? fromDate : toDate}
           mode="date"
-          is24Hour={true}
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
           onChange={onChangeDate}
+          minimumDate={new Date()}
         />
-      )}
-      {/* Botones "Cancelar" y "Hecho" solo para iOS */}
-      {showDatePicker && Platform.OS === 'ios' && (
-        <HStack justifyContent="space-around" p="$2" bg="$white">
-          <Button variant="outline" onPress={() => setShowDatePicker(false)}>
-            <ButtonText>Cancel</ButtonText>
-          </Button>
-          <Button onPress={onDoneIOS}>
-            <ButtonText>Done</ButtonText>
-          </Button>
-        </HStack>
       )}
     </SafeAreaView>
   );
 }
-
-// Agregamos estilos para el SafeAreaView
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-});

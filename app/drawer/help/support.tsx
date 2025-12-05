@@ -1,123 +1,134 @@
+import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-// Interfaz TypeScript para definir la estructura de cada ítem de los términos
-interface TCAItem {
-    titulo: string;
-    contenido: string;
+import { LayoutAnimation, Platform, ScrollView, Text, TouchableOpacity, UIManager, View, useColorScheme } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+// --- Hooks de Tema ---
+import { useThemeColor } from '../../../hooks/use-theme-color';
+
+// 1. IMPORTAR CONTEXTO DE IDIOMA
+import { useLanguage } from '../../context/LanguageContext';
+
+// Habilitar animaciones en Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// Componente principal
-const TermsAndConditionsScreen = () => {
-    const [expandedSection, setExpandedSection] = useState<number | null>(null);
+interface TCAItem {
+  titulo: string;
+  contenido: string;
+}
 
-    const datosTCA: TCAItem[] = [
-        {
-            titulo: "1. Aceptación de los Términos",
-            contenido:
-                "Al acceder o utilizar el servicio, usted acepta estar sujeto a estos Términos y Condiciones...",
-        },
-        {
-            titulo: "2. Descripción del Servicio",
-            contenido:
-                "Nuestra plataforma conecta a propietarios de vehículos ('Anfitriones') con personas que buscan alquilarlos...",
-        },
-        {
-            titulo: "3. Registro y Cuentas",
-            contenido:
-                "El uso de ciertas funciones requiere que se registre para obtener una cuenta...",
-        },
-        {
-            titulo: "4. Obligaciones del Anfitrión (Propietario)",
-            contenido:
-                "El Anfitrión garantiza que su vehículo está legalmente apto para circular...",
-        },
-        {
-            titulo: "5. Pagos, Tarifas y Comisiones",
-            contenido:
-                "Las tarifas de alquiler son fijadas por el Anfitrión...",
-        },
-        {
-            titulo: "6. Cancelaciones y Penalizaciones",
-            contenido:
-                "Las políticas de cancelación varían según la opción seleccionada por el Anfitrión...",
-        },
-        {
-            titulo: "7. Limitación de Responsabilidad",
-            contenido:
-                "La plataforma no se hace responsable de daños, pérdidas o lesiones derivadas del uso de los vehículos alquilados...",
-        },
-    ];
+export default function TermsAndConditionsScreen() {
+  const [expandedSection, setExpandedSection] = useState<number | null>(null);
 
-    const toggleExpand = (index: number) => {
-        setExpandedSection(index === expandedSection ? null : index);
-    };
+  // 2. USAR EL HOOK DE IDIOMA
+  const { t } = useLanguage();
 
-    return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Términos y Condiciones del Servicio</Text>
-      <Text style={styles.intro}>
-        Por favor, revise detenidamente los siguientes términos y condiciones.
-      </Text>
+  // --- Tema ---
+  const scheme = useColorScheme();
+  const background = useThemeColor({}, 'background');
+  const textColor = useThemeColor({}, 'text');
+  
+  const cardBackground = scheme === 'dark' ? '#1C1C1E' : '#FFFFFF';
+  const borderColor = scheme === 'dark' ? '#3A3A3C' : '#E5E5E5';
+  const footerBackground = scheme === 'dark' ? '#111827' : '#e0f2fe'; 
+  const footerTextColor = scheme === 'dark' ? '#9CA3AF' : '#424448';
 
-      {datosTCA.map((item, index) => (
-        <View key={index} style={styles.card}>
-          <TouchableOpacity
-            onPress={() => toggleExpand(index)}
-            style={styles.cardHeader}
-          >
-            <Text style={styles.cardTitle}>{item.titulo}</Text>
-            <Svg
-              width={24}
-              height={24}
-              style={{
-                transform: [{ rotate: expandedSection === index ? '180deg' : '0deg' }],
-              }}
-              stroke="#ee8f13ff"
-              strokeWidth={2}
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <Path d="M19 9l-7 7-7-7" strokeLinecap="round" strokeLinejoin="round" />
-            </Svg>
-          </TouchableOpacity>
+  // 3. CONSTRUIR ARRAY CON TRADUCCIONES
+  const datosTCA: TCAItem[] = [
+    {
+      titulo: t('term_1_title'),
+      contenido: t('term_1_content'),
+    },
+    {
+      titulo: t('term_2_title'),
+      contenido: t('term_2_content'),
+    },
+    {
+      titulo: t('term_3_title'),
+      contenido: t('term_3_content'),
+    },
+    {
+      titulo: t('term_4_title'),
+      contenido: t('term_4_content'),
+    },
+    {
+      titulo: t('term_5_title'),
+      contenido: t('term_5_content'),
+    },
+    {
+      titulo: t('term_6_title'),
+      contenido: t('term_6_content'),
+    },
+    {
+      titulo: t('term_7_title'),
+      contenido: t('term_7_content'),
+    },
+  ];
 
-          {expandedSection === index && (
-            <View style={styles.cardContent}>
-              <Text style={styles.cardText}>{item.contenido}</Text>
-            </View>
-          )}
-        </View>
-      ))}
+  const toggleExpand = (index: number) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpandedSection(index === expandedSection ? null : index);
+  };
 
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>
-          Al continuar utilizando la aplicación, usted reconoce que ha leído, entendido y aceptado los Términos y Condiciones arriba mencionados.
+  return (
+    <SafeAreaView className="flex-1" style={{ backgroundColor: background }}>
+      <ScrollView contentContainerClassName="p-4 pb-10">
+        <Text className="text-2xl font-bold text-center mb-4" style={{ color: textColor }}>
+          {t('termsTitle')} {/* <-- Traducido */}
         </Text>
-        <TouchableOpacity
-          onPress={() => console.log('Aceptado')}
-          style={styles.button}
+        <Text className="text-base text-center mb-6 text-gray-500">
+          {t('termsSubtitle')} {/* <-- Traducido */}
+        </Text>
+
+        {datosTCA.map((item, index) => (
+          <View 
+            key={index} 
+            className="mb-3 rounded-xl overflow-hidden border shadow-sm"
+            style={{ backgroundColor: cardBackground, borderColor }}
+          >
+            <TouchableOpacity
+              onPress={() => toggleExpand(index)}
+              className="flex-row justify-between items-center p-4"
+            >
+              <Text className="text-base font-bold flex-1 mr-2" style={{ color: textColor }}>
+                {item.titulo}
+              </Text>
+              <Ionicons 
+                name={expandedSection === index ? "chevron-up" : "chevron-down"} 
+                size={20} 
+                color="orange" 
+              />
+            </TouchableOpacity>
+
+            {expandedSection === index && (
+              <View className="p-4 pt-0">
+                <Text className="text-sm leading-5 text-gray-500 dark:text-gray-400">
+                  {item.contenido}
+                </Text>
+              </View>
+            )}
+          </View>
+        ))}
+
+        <View 
+          className="mt-6 p-4 rounded-xl"
+          style={{ backgroundColor: footerBackground }}
         >
-          <Text style={styles.buttonText}>Entendido y Acepto</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <Text className="text-sm text-center mb-4" style={{ color: footerTextColor }}>
+            {t('termsFooter')} {/* <-- Traducido */}
+          </Text>
+          <TouchableOpacity
+            onPress={() => console.log('Aceptado')}
+            className="bg-orange-500 py-3 rounded-lg"
+          >
+            <Text className="text-white text-base font-bold text-center">
+              {t('termsAccept')} {/* <-- Traducido */}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
-};
-
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fffdecff' },
-  header: { fontSize: 24, fontWeight: 'bold', textAlign: 'center', marginBottom: 16, color: '#050505ff' },
-  intro: { fontSize: 16, textAlign: 'center', marginBottom: 16, color: '#161717ff' },
-  card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 12, padding: 12, elevation: 2 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: '#1f2937', flex: 1 },
-  cardContent: { marginTop: 8 },
-  cardText: { fontSize: 14, color: '#4b5563' },
-  footer: { marginTop: 24, padding: 16, backgroundColor: '#e0f2fe', borderRadius: 12 },
-  footerText: { fontSize: 14, textAlign: 'center', marginBottom: 12, color: '#424448ff' },
-  button: { backgroundColor: '#ee8f13ff', paddingVertical: 12, borderRadius: 8 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
-});
-
-export default TermsAndConditionsScreen;
+}
